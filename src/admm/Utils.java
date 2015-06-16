@@ -16,8 +16,6 @@ import com.jmatio.types.MLDouble;
 
 public class Utils {
 	
-	public static int ROUND_PLACES = 4;
-	
 	public static MasterData LoadMasterDataFromMatFile(String filePath)
 	{
 		try
@@ -122,7 +120,8 @@ public class Utils {
 		int i = 0;
 		for(double[] d: dArray)
 		{
-			sArray[i] = d[0];
+			//sArray[i] = d[0];
+			sArray[i] = Utils.round(d[0]);
 			i++;
 		}
 		
@@ -192,7 +191,7 @@ public class Utils {
 		
 		for(int i=0; i < arr1.length; i++)
 		{
-			sumArr[i] = round( arr1[i] + arr2[i], ROUND_PLACES);
+			sumArr[i] = round(arr1[i] + arr2[i]);
 		}
 		
 		return sumArr;
@@ -202,7 +201,7 @@ public class Utils {
 	{	
 		for(int i=0; i < column.length; i++)
 		{
-			original[i][columnId] = round(column[i], 4);
+			original[i][columnId] = round(column[i]);
 		}
 		
 		return original;
@@ -219,31 +218,25 @@ public class Utils {
 		return column;
 	}
 	
-	public static double[] calculateMean(double[][] matrix)
-	{
-		double[] average = new double[matrix.length];
-		double rowSum = 0;
-		for(int i =0; i< matrix.length; i++)
-		{
-			for(int j=0; j< matrix[0].length;j++)
-			{
-				rowSum += matrix[i][j];
-			}
-			average[i] = round(rowSum/(double)matrix[0].length , ROUND_PLACES);
-			
-			rowSum = 0;
-		}
+	public static double[] calculateMean(double[] xMasterOptimal, double[] xSlaveAverageOptimal, int evCount)
+	{	
+		double [] average = Utils.vectorAdd(xMasterOptimal, xSlaveAverageOptimal);
+		
+		for(int i =0; i< xMasterOptimal.length; i++)
+			average[i] = round(average[i]/(double)evCount);
+		//average[i] = round(average[i]/(double)xMasterOptimal.length , ROUND_PLACES);
 		
 		return average;
 	}
 	
-	public static double round(double value, int places) {
-//	    if (places < 0) throw new IllegalArgumentException();
-//
-//	    BigDecimal bd = new BigDecimal(value);
-//	    bd = bd.setScale(places, RoundingMode.HALF_UP);
-//	    return bd.doubleValue();
-		return value;
+	public static double round(double value) {
+		int places = Constants.ROUND_PLACES;
+	    if (places < 0) throw new IllegalArgumentException();
+
+	    BigDecimal bd = new BigDecimal(value);
+	    bd = bd.setScale(places, RoundingMode.HALF_UP);
+	    return bd.doubleValue();
+		//return value;
 	}
 	
 	public static double[] calculateSumOfEVOptimalValue(double[][] matrix)

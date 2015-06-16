@@ -6,25 +6,27 @@ public class ResultMaster {
 	int ev;
 	double[] u;
 	double[] xMean;
-	double[][] x;
+	//double[] x;
 	double[] x_master_optimal;
 	double costValue;
+	double[] evAverage;
 	
-	public ResultMaster(String peerName,int iteration, int ev_number, double[] u, double[] xMean, double[] x_optimal, double costvalue, double[][] x)
+	public ResultMaster(String peerName,int iteration, int ev_number, double[] u, double[] xMean, double[] x_optimal, double costvalue, double[] evAverageValue)
 	{
 		this.peerName = peerName;
 		this.iteration = iteration;
 		this.ev = ev_number;
 		this.u = u;
 		this.xMean = xMean;
-		this.x = x;
+		//this.x = x;
 		this.x_master_optimal = x_optimal;
 		this.costValue = costvalue;
+		this.evAverage = evAverageValue;
 	}
 	
 	public void printResult(int count)
 	{
-		double[] temp = Utils.calculateSumOfEVOptimalValue(x);
+		double[] temp = evAverage;
 		
 		double x_evSum = 0;
 		for(int k=0; k < temp.length;k++)

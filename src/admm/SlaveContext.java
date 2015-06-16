@@ -37,6 +37,9 @@ public class SlaveContext {
 	{	
 		slaveData = Utils.LoadSlaveDataFromMatFile(fileName);
 		this.x = slaveData.getXOptimal(); //Read the last optimal value directly from the .mat file
+		System.out.println("==============================");
+		Utils.PrintArray(this.x);
+		System.out.println("==============================");
 		
 		rho = rhoValue;
 		evFileName = fileName; 

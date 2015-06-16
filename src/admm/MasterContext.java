@@ -29,7 +29,8 @@ public class MasterContext {
 	private double[] xMean;
 	private double[] x_optimal;
 	
-	private double[][] x_master;
+	//private double[][] x_master;
+	//private double[] x_master;
 	private double[] u;
 	
 	public MasterContext(String inputPath, int evCount, double rhoValue)
@@ -39,7 +40,9 @@ public class MasterContext {
 		N_EV = evCount;
 		rho = rhoValue;
 		
-		x_master = Utils.getZeroDoubleArray(getT(),getN());
+		//x_master = Utils.getZeroDoubleArray(getT(),getN());
+		//x_master = Utils.getArrayWithData(getT(),0);
+		x_optimal = Utils.getArrayWithData(getT(),0);
 		u = Utils.getArrayWithData(getT(),0);
 		
 		
@@ -102,14 +105,16 @@ public class MasterContext {
 		for(int u=0; u< x_n.length; u++)
 		{
 			x_optimal[u] = cplex.getValues(x_n)[u];
-			System.out.print(Utils.round(cplex.getValues(x_n)[u],4) + "\t");
+			System.out.print(Utils.round(cplex.getValues(x_n)[u]) + "\t");
 		}
 		
 		System.out.println("=====");
 		
+		this.setXOptimal(x_optimal);
 		
 		//TODO: Do error handling here. Check status of optimization
-		this.setX(Utils.setColumnInMatrix(this.getx(), x_optimal, this.getN() - 1));
+		//this.setX(Utils.setColumnInMatrix(this.getx(), x_optimal, this.getN() - 1));
+		//this.setX(x_optimal);
 		
 		return cplex.getObjValue();
 	}
@@ -137,9 +142,14 @@ public class MasterContext {
 		return output;
 	}
 	
-	public void setX(double[][] value)
+//	public void setX(double[] value)
+//	{
+//		this.x_master = value;
+//	}
+	
+	public void setXOptimal(double[] value)
 	{
-		this.x_master = value;
+		this.x_optimal = value;
 	}
 	
 	public void setXMean(double[] value)
@@ -164,10 +174,10 @@ public class MasterContext {
 		return this.T;
 	}
 	
-	public double[][] getx()
-	{
-		return this.x_master;
-	}
+//	public double[] getx()
+//	{
+//		return this.x_master;
+//	}
 	
 	public double[] getu()
 	{
