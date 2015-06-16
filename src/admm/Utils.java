@@ -42,7 +42,7 @@ public class Utils {
 		}
 	}
 	
-	public static SlaveData LoadSlaveDataFromMatFile(String filePath)
+	public static SlaveData LoadSlaveDataFromMatFile(String filePath, int iteration)
 	{
 		try
 		{
@@ -55,7 +55,7 @@ public class Utils {
 			double[][] SminArray = ((MLDouble)matfilereader.getMLArray("S_min")).getArray(); //Conversion
 			
 			double[][] x_optimal = new double[dArray[0].length][1];
-			if(matfilereader.getMLArray("x_optimal") == null) {
+			if(matfilereader.getMLArray("x_optimal") == null || iteration == 0) {
 				for(int i=0; i< dArray[0].length;i++) {
 					x_optimal[i][0] = 0;
 				}
@@ -230,13 +230,13 @@ public class Utils {
 	}
 	
 	public static double round(double value) {
-		int places = Constants.ROUND_PLACES;
-	    if (places < 0) throw new IllegalArgumentException();
-
-	    BigDecimal bd = new BigDecimal(value);
-	    bd = bd.setScale(places, RoundingMode.HALF_UP);
-	    return bd.doubleValue();
-		//return value;
+//		int places = Constants.ROUND_PLACES;
+//	    if (places < 0) throw new IllegalArgumentException();
+//
+//	    BigDecimal bd = new BigDecimal(value);
+//	    bd = bd.setScale(places, RoundingMode.HALF_UP);
+//	    return bd.doubleValue();
+		return value;
 	}
 	
 	public static double[] calculateSumOfEVOptimalValue(double[][] matrix)

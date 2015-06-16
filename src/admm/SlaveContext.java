@@ -32,10 +32,13 @@ public class SlaveContext {
 	private double[] x;
 	int currentEVNo;
 	private String evFileName;
+	private int currentIteration = 0;
 	
-	public SlaveContext(String fileName, double[] xMean, double[] u, int currentEVNo, double rhoValue)
+	public SlaveContext(String fileName, double[] xMean, double[] u, int currentEVNo, double rhoValue, int iteration)
 	{	
-		slaveData = Utils.LoadSlaveDataFromMatFile(fileName);
+		currentIteration = iteration;
+		
+		slaveData = Utils.LoadSlaveDataFromMatFile(fileName, currentIteration);
 		this.x = slaveData.getXOptimal(); //Read the last optimal value directly from the .mat file
 		System.out.println("==============================");
 		Utils.PrintArray(this.x);

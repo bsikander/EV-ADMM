@@ -161,7 +161,7 @@ public class EVADMMBsp extends BSP<NullWritable, NullWritable, NullWritable, Nul
 							masterData.getxMean(), 
 							masterData.getU(),
 							masterData.getEVId(),
-							RHO);
+							RHO, k);
 					try {
 						System.out.println("Slave: " + peer.getPeerName() + ":: Starting Slave optimization");
 						//Do optimization and write the x_optimal to mat file
