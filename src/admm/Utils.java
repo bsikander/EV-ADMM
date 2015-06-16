@@ -2,20 +2,26 @@ package admm;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 
 import org.codehaus.jackson.map.ObjectMapper;
 
 import com.jmatio.io.MatFileReader;
+import com.jmatio.io.MatFileWriter;
 import com.jmatio.types.MLArray;
 import com.jmatio.types.MLDouble;
 
 public class Utils {
 	
+	public static int ROUND_PLACES = 4;
+	
 	public static MasterData LoadMasterDataFromMatFile(String filePath)
 	{
 		try
 		{
-		
+			MatFileWriter writer = new MatFileWriter();
+			 
 			MatFileReader matfilereader = new MatFileReader(filePath);
 			double[][] reArray = ((MLDouble)matfilereader.getMLArray("re")).getArray(); //Conversion
 			double[][] DArray = ((MLDouble)matfilereader.getMLArray("D")).getArray(); //Conversion
@@ -64,6 +70,11 @@ public class Utils {
 			System.out.println("Exception in LoadSlaveDataFromMatFile function in Utils" + e.getMessage());
 			return null;
 		}
+	}
+	
+	public static void SlaveXToMatFile(String filePath)
+	{
+		
 	}
 	
 	private static double[] getSingleArrayFromDouble(double[][] dArray)
@@ -142,17 +153,17 @@ public class Utils {
 		
 		for(int i=0; i < arr1.length; i++)
 		{
-			sumArr[i] = arr1[i] + arr2[i];
+			sumArr[i] = round( arr1[i] + arr2[i], ROUND_PLACES);
 		}
 		
 		return sumArr;
 	}
 	
 	public static double[][] setColumnInMatrix(double[][] original, double[] column, int columnId)
-	{
+	{	
 		for(int i=0; i < column.length; i++)
 		{
-			original[i][columnId] = column[i];
+			original[i][columnId] = round(column[i], 4);
 		}
 		
 		return original;
@@ -179,12 +190,124 @@ public class Utils {
 			{
 				rowSum += matrix[i][j];
 			}
-			average[i] = rowSum/(double)matrix[0].length;
+			average[i] = round(rowSum/(double)matrix[0].length , ROUND_PLACES);
 			
 			rowSum = 0;
 		}
 		
 		return average;
+	}
+	
+	public static double round(double value, int places) {
+//	    if (places < 0) throw new IllegalArgumentException();
+//
+//	    BigDecimal bd = new BigDecimal(value);
+//	    bd = bd.setScale(places, RoundingMode.HALF_UP);
+//	    return bd.doubleValue();
+		return value;
+	}
+	
+	public static double[] calculateSumOfEVOptimalValue(double[][] matrix)
+	{
+		double[] average = new double[matrix.length];
+		double rowSum = 0;
+		for(int i =0; i< matrix.length; i++)
+		{
+			for(int j=0; j< matrix[0].length - 1;j++)
+			{
+				rowSum += matrix[i][j];
+			}
+			average[i] = rowSum;
+			
+			rowSum = 0;
+		}
+		
+		return average;
+	}
+
+	
+	public static double[] calculateSum(double[][] matrix)
+	{
+		double[] sumArray = new double[matrix.length];
+		double rowSum = 0;
+		
+		for(int i =0; i< matrix.length; i++)
+		{
+			for(int j=0; j< matrix[0].length;j++)
+			{
+				rowSum += matrix[i][j];
+			}
+			sumArray[i] = rowSum;
+			
+			rowSum = 0;
+		}
+		
+		return sumArray;
+		
+	}
+	
+	public static double[][] calculateMatrixSubtraction(double[][] mat1, double[][] mat2) {
+		double[][] subtractedMatrix = new double[mat1.length][mat1[0].length];
+		
+		for(int i=0; i< mat1.length; i++)
+		{
+			for(int j=0; j< mat1[0].length; j++)
+			{
+				subtractedMatrix[i][j] = mat1[i][j] - mat2[i][j];
+			}
+		}
+		
+		return subtractedMatrix;
+	}
+	
+	public static double[] calculateVectorSubtraction(double[] vec1, double[] vec2) {
+		double[] subtractedMatrix = new double[vec1.length];
+		
+		for(int i=0; i< vec1.length; i++)
+			subtractedMatrix[i] = vec1[i] - vec2[i];
+		
+		return subtractedMatrix;
+	}
+
+	public static double[] addMatrixAndVector(double[][] mat, double[] vec)
+	{
+		int count = 0;
+		double[] result = new double[mat.length*mat[0].length];
+		for(int i=0; i< mat[0].length ; i++)
+		{
+			for(int j=0; j < mat.length; j++)
+			{
+				result[count] = mat[j][i] + vec[j];
+				count++;
+			}
+		}
+		
+		return result;
+	}
+	
+	public static double calculateNorm(double[] vec)
+	{
+		double result = 0.0;
+		for(int i =0; i< vec.length;i++) {
+			result += (vec[i]*vec[i]);
+		}
+		
+		return Math.pow(result, 0.5);
+	}
+	
+	public static double[] scaleVector(double[] vec, int N)
+	{
+		double[] scaledVec = new double[vec.length*N];
+		int count=0;
+		for(int i=0 ; i< N; i++)
+		{
+			for(int j=0; j< vec.length; j++)
+			{
+				scaledVec[count] = vec[j];
+				count++;
+			}
+		}
+		return scaledVec;
 	}
 	
 	public static void PrintArray(double[] input)

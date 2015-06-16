@@ -28,9 +28,7 @@ public class MasterData {
 		double[] scaledPrice = new double[price.length*4];
 		int index = 0;
 		for(double d : price)
-		{
-			
-			
+		{	
 			scaledPrice[index] = (d/(3600*1000)) * (15*60);
 			scaledPrice[index+1] = (d/(3600*1000)) * (15*60);
 			scaledPrice[index+2] = (d/(3600*1000)) * (15*60);
