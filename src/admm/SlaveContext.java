@@ -31,11 +31,15 @@ public class SlaveContext {
 	private double[] x_optimal;
 	private double[] x;
 	int currentEVNo;
+	private String evFileName;
 	
-	public SlaveContext(String fileName, double[] xMean, double[] u, double[] x, int currentEVNo, double rhoValue)
+	public SlaveContext(String fileName, double[] xMean, double[] u, int currentEVNo, double rhoValue)
 	{	
 		slaveData = Utils.LoadSlaveDataFromMatFile(fileName);
+		this.x = slaveData.getXOptimal(); //Read the last optimal value directly from the .mat file
+		
 		rho = rhoValue;
+		evFileName = fileName; 
 		
 		this.alpha = (0.05/3600) * (15*60);
 		
@@ -44,7 +48,6 @@ public class SlaveContext {
 		
 		this.xMean = xMean;
 		this.u = u;
-		this.x = x;
 		this.currentEVNo = currentEVNo;
 	}
 	
@@ -118,6 +121,9 @@ public class SlaveContext {
 			//System.out.println(cplex.getValues(x_i)[u]);
 		}
 		
+		//Write the x_optimal to mat file
+		Utils.SlaveXToMatFile(evFileName, x_optimal);
+		
 //		System.out.println("======= SLAVE: OPTIMZATION ARRAY =====");
 //		for(int u=0; u< x_i.length; u++)
 //		{
@@ -182,6 +188,11 @@ public class SlaveContext {
 	public double[] getXMean()
 	{
 		return this.xMean;
+	}
+	
+	public double[] getX()
+	{
+		return this.x;
 	}
 	
 }

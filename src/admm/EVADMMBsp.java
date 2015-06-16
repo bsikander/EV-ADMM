@@ -53,14 +53,11 @@ public class EVADMMBsp extends BSP<NullWritable, NullWritable, NullWritable, Nul
 				try {
 					//Optimize + return the cost + save the optimal X* in the x matrix last column
 					int currentEV = 0;
-					double[] x_ev;
 					
 					System.out.println("MASTER:: Starting to send data to all EV's");
 					while(currentEV != masterContext.getN() - 1)
 					{	
-						x_ev = Utils.getColumn(masterContext.getx(), currentEV);
-						
-						NetworkObjectMaster objectToSend = new NetworkObjectMaster(masterContext.getu(), masterContext.getxMean(),x_ev, currentEV);
+						NetworkObjectMaster objectToSend = new NetworkObjectMaster(masterContext.getu(), masterContext.getxMean(), currentEV);
 						
 						//Never send a message to peer 0 since it is the master
 						sendxMeanAndUToSlaves(peer, objectToSend, peer.getPeerName((currentEV % (peer.getNumPeers()-1) + 1) ));
@@ -161,15 +158,15 @@ public class EVADMMBsp extends BSP<NullWritable, NullWritable, NullWritable, Nul
 
 					slaveContext = new SlaveContext(EV_PATH + (masterData.getEVId() +1) + ".mat", 
 							masterData.getxMean(), 
-							masterData.getU(), 
-							masterData.getx(), 
+							masterData.getU(),
 							masterData.getEVId(),
 							RHO);
 					try {
 						System.out.println("Slave: " + peer.getPeerName() + ":: Starting Slave optimization");
+						//Do optimization and write the x_optimal to mat file
 						double cost = slaveContext.optimize();
 						
-						resultList.add(new Result(peer.getPeerName(),k,masterData.getEVId(), masterData.getx(),masterData.getxMean(),masterData.getU(),slaveContext.getXOptimalSlave(),cost));
+						resultList.add(new Result(peer.getPeerName(),k,masterData.getEVId(), slaveContext.getX(),masterData.getxMean(),masterData.getU(),slaveContext.getXOptimalSlave(),cost));
 						
 						NetworkObjectSlave slave = new NetworkObjectSlave(slaveContext.getXOptimalSlave(), slaveContext.getCurrentEVNo());
 						System.out.println("Slave: " + peer.getPeerName() + ":: Sending slave x* to Master");
@@ -232,7 +229,7 @@ public class EVADMMBsp extends BSP<NullWritable, NullWritable, NullWritable, Nul
 	{
 		for(String peerName: peer.getAllPeerNames()) {
 			if(!peerName.equals(this.masterTask)) {
-				peer.send(peerName, new Text(Utils.networkMasterToJson(new NetworkObjectMaster(null,null,null,-1))));
+				peer.send(peerName, new Text(Utils.networkMasterToJson(new NetworkObjectMaster(null,null,-1))));
 			}	
 		}
 	}

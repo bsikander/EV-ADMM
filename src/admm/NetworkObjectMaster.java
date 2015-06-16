@@ -22,18 +22,17 @@ public class NetworkObjectMaster implements Writable {
 	@JsonProperty("EVId")
 	private int EVId;
 	
-	@JsonProperty("x")
-	private double[] x;
+	//@JsonProperty("x")
+	//private double[] x;
 	
 	public NetworkObjectMaster()
 	{}
 	
-	public NetworkObjectMaster(double[] u, double[] xMean, double[] x, int EVId)
+	public NetworkObjectMaster(double[] u, double[] xMean, int EVId)
 	{
 		this.u = u;
 		this.xMean = xMean;	
 		this.EVId = EVId;
-		this.x = x;
 	}
 	
 	public void setNetworkObjectMaster(NetworkObjectMaster n)
@@ -41,7 +40,6 @@ public class NetworkObjectMaster implements Writable {
 		this.u = n.u;
 		this.xMean = n.xMean;
 		this.EVId = n.EVId;
-		this.x = n.x;
 	}
 	
 	@Override
@@ -73,12 +71,6 @@ public class NetworkObjectMaster implements Writable {
 	public int getEVId()
 	{
 		return this.EVId;
-	}
-	
-	@JsonProperty("x")
-	public double[] getx()
-	{
-		return this.x;
 	}
 	
 }
