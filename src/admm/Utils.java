@@ -4,6 +4,8 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.codehaus.jackson.map.ObjectMapper;
 
@@ -72,9 +74,36 @@ public class Utils {
 		}
 	}
 	
-	public static void SlaveXToMatFile(String filePath)
+	public static void SlaveXToMatFile(String filePath, double[] x)
 	{
-		
+		try
+		{
+			MatFileWriter matfileWriter = new MatFileWriter();
+			MatFileReader matfileReader = new MatFileReader(filePath);
+			
+			List<MLArray> list = new ArrayList<MLArray>();
+			list.add((matfileReader.getMLArray("d")));
+			list.add(matfileReader.getMLArray("A"));
+			list.add(matfileReader.getMLArray("B"));
+			list.add(matfileReader.getMLArray("R"));
+			list.add(matfileReader.getMLArray("S_max")); //Conversion
+			list.add(matfileReader.getMLArray("S_min")); //Conversion
+			
+			double[][] xDoubleArray = new double[x.length][1];
+			for(int i =0; i< x.length; i++) {
+				xDoubleArray[i][0] = x[i];
+			}	
+			
+			MLArray xMLArray = new MLDouble("x_star",xDoubleArray);
+			list.add(xMLArray);
+			
+			matfileWriter.write("test.mat", list);
+			
+		}
+		catch(Exception e)
+		{
+			System.out.println("Exception in LoadSlaveDataFromMatFile function in Utils" + e.getMessage());
+		}
 	}
 	
 	private static double[] getSingleArrayFromDouble(double[][] dArray)

@@ -1,0 +1,7 @@
+Tried aggregator 1 time.
+QP Presolve eliminated 0 rows and 97 columns.
+All rows and columns eliminated.
+Presolve time = 0.06 sec. (0.01 ticks)
+Barrier time = 0.10 sec. (0.01 ticks)
+
+Total time on 4 threads = 0.10 sec. (0.01 ticks)
