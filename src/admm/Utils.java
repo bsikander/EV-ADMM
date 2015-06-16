@@ -55,7 +55,7 @@ public class Utils {
 			double[][] RArray = ((MLDouble)matfilereader.getMLArray("R")).getArray();
 			double[][] SmaxArray = ((MLDouble)matfilereader.getMLArray("S_max")).getArray(); //Conversion
 			double[][] SminArray = ((MLDouble)matfilereader.getMLArray("S_min")).getArray(); //Conversion
-			
+			double test = 0.1;
 			SlaveData context = new SlaveData(
 											dArray[0], 
 											AArray[0], 
