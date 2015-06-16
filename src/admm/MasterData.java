@@ -34,7 +34,6 @@ public class MasterData {
 			scaledPrice[index+2] = (d/(3600*1000)) * (15*60);
 			scaledPrice[index+3] = (d/(3600*1000)) * (15*60);
 			
-			//System.out.println(scaledPrice[index]);
 			index += 4;
 		}
 		

@@ -32,13 +32,13 @@ public class SlaveContext {
 	private double[] x;
 	int currentEVNo;
 	private String evFileName;
-	private int currentIteration = 0;
+	private boolean firstIteration = true;
 	
-	public SlaveContext(String fileName, double[] xMean, double[] u, int currentEVNo, double rhoValue, int iteration)
+	public SlaveContext(String fileName, double[] xMean, double[] u, int currentEVNo, double rhoValue, boolean isFirstIteration)
 	{	
-		currentIteration = iteration;
+		firstIteration = isFirstIteration;
 		
-		slaveData = Utils.LoadSlaveDataFromMatFile(fileName, currentIteration);
+		slaveData = Utils.LoadSlaveDataFromMatFile(fileName, firstIteration);
 		this.x = slaveData.getXOptimal(); //Read the last optimal value directly from the .mat file
 		System.out.println("==============================");
 		Utils.PrintArray(this.x);
@@ -110,11 +110,9 @@ public class SlaveContext {
 			cplex.addGe(cplex.sum(BXExpGe), this.slaveData.getSmin()[h]);
 		}
 		
-		
-		cplex.exportModel("EV.lp");
+		//cplex.exportModel("EV.lp");
 		
 		cplex.solve();
-		
 		
 		System.out.println("Slave Output value: " + cplex.getObjValue() + "  CurrentEV: " + this.currentEVNo);
 		System.out.println(cplex.getStatus());
@@ -124,22 +122,11 @@ public class SlaveContext {
 		for(int u=0; u< x_i.length; u++)
 		{
 			x_optimal[u] = cplex.getValues(x_i)[u];
-			//System.out.println(cplex.getValues(x_i)[u]);
 		}
 		
 		//Write the x_optimal to mat file
 		Utils.SlaveXToMatFile(evFileName, x_optimal);
 		
-//		System.out.println("======= SLAVE: OPTIMZATION ARRAY =====");
-//		for(int u=0; u< x_i.length; u++)
-//		{
-//			x_optimal[u] = cplex.getValues(x_i)[u];
-//			System.out.print(cplex.getValues(x_i)[u] + "\t");
-//		}
-//		
-//		System.out.println("=====");
-		
-		//TODO: Do error handling here. Check status of optimization
 		return cplex.getObjValue();
 	}
 	
@@ -148,7 +135,6 @@ public class SlaveContext {
 	{
 		xold = Utils.scalerMultiply(xold, -1);
 		return Utils.vectorAdd(Utils.vectorAdd(xold, this.xMean), this.u);
-		//return xold.add(this.xMean).add(this.u);
 	}
 	
 	public int getCurrentEVNo()

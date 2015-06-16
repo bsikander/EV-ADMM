@@ -3,6 +3,9 @@ package admm;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+
 
 //import org.apache.commons.math3.linear.RealMatrix;
 import org.apache.hadoop.io.Text;
@@ -19,27 +22,26 @@ public class NetworkObjectMaster implements Writable {
 	@JsonProperty("xMean")
 	private double[] xMean;
 	
-	@JsonProperty("EVId")
-	private int EVId;
-	
-	//@JsonProperty("x")
-	//private double[] x;
+	@JsonProperty("EVs")
+	private List<Integer> EVs;
 	
 	public NetworkObjectMaster()
-	{}
+	{
+		EVs = new ArrayList<Integer>();
+	}
 	
-	public NetworkObjectMaster(double[] u, double[] xMean, int EVId)
+	public NetworkObjectMaster(double[] u, double[] xMean, List<Integer> EVs)
 	{
 		this.u = u;
 		this.xMean = xMean;	
-		this.EVId = EVId;
+		this.EVs = EVs;
 	}
 	
 	public void setNetworkObjectMaster(NetworkObjectMaster n)
 	{
 		this.u = n.u;
 		this.xMean = n.xMean;
-		this.EVId = n.EVId;
+		this.EVs = n.EVs;
 	}
 	
 	@Override
@@ -67,10 +69,25 @@ public class NetworkObjectMaster implements Writable {
 		return this.xMean;
 	}
 	
-	@JsonProperty("EVId")
-	public int getEVId()
+	@JsonProperty("EVs")
+	public List<Integer> getEV()
 	{
-		return this.EVId;
+		return this.EVs;
+	}
+	
+	public void setU(double[] value)
+	{
+		this.u = value;
+	}
+	
+	public void setxMean(double[] value) 
+	{
+		this.xMean = value;
+	}
+	
+	public void addEV(int evId)
+	{
+		EVs.add(evId);
 	}
 	
 }

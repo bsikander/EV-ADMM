@@ -42,7 +42,7 @@ public class Utils {
 		}
 	}
 	
-	public static SlaveData LoadSlaveDataFromMatFile(String filePath, int iteration)
+	public static SlaveData LoadSlaveDataFromMatFile(String filePath, boolean isFirstIteration)
 	{
 		try
 		{
@@ -55,7 +55,7 @@ public class Utils {
 			double[][] SminArray = ((MLDouble)matfilereader.getMLArray("S_min")).getArray(); //Conversion
 			
 			double[][] x_optimal = new double[dArray[0].length][1];
-			if(matfilereader.getMLArray("x_optimal") == null || iteration == 0) {
+			if(matfilereader.getMLArray("x_optimal") == null || isFirstIteration == true) {
 				for(int i=0; i< dArray[0].length;i++) {
 					x_optimal[i][0] = 0;
 				}

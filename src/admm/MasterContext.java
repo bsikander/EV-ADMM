@@ -29,27 +29,20 @@ public class MasterContext {
 	private double[] xMean;
 	private double[] x_optimal;
 	
-	//private double[][] x_master;
-	//private double[] x_master;
 	private double[] u;
 	
 	public MasterContext(String inputPath, int evCount, double rhoValue)
 	{
-		//masterData = Utils.LoadMasterDataFromMatFile("/Users/raja/Documents/Thesis/ADMM_matlab/Aggregator/aggregator.mat");
 		masterData = Utils.LoadMasterDataFromMatFile(inputPath);
 		N_EV = evCount;
 		rho = rhoValue;
 		
-		//x_master = Utils.getZeroDoubleArray(getT(),getN());
-		//x_master = Utils.getArrayWithData(getT(),0);
 		x_optimal = Utils.getArrayWithData(getT(),0);
 		u = Utils.getArrayWithData(getT(),0);
-		
 		
 		//Xa_min and Xa_max
 		double[] m = Utils.getArrayWithData(getT(),1);
 		m = Utils.scalerMultiply(m, -100e3);
-		
 
 		double[] m_max = Utils.getArrayWithData(getT(),1);
 		m_max = Utils.scalerMultiply(m_max, 60);
@@ -57,7 +50,6 @@ public class MasterContext {
 		this.xa_min = m;
 		this.xa_max = m_max;
 		
-
 		xMean = Utils.getArrayWithData(getT(),0);
 	}
 	
@@ -86,15 +78,8 @@ public class MasterContext {
 		
 		IloNumExpr rightSide = cplex.sum(exps);
 		cplex.addMinimize(rightSide);
-		
-//		for(int j = 0; j < data.length ; j++ )
-//		{
-//			cplex.addLe(x_n[j], -xa_min[j]);
-//			cplex.addGe(x_n[j], -xa_max[j]);
-//		}
-		
-		cplex.exportModel("TestModel_beh" + iteration +".lp");
-		
+				
+		//cplex.exportModel("TestModel_beh" + iteration +".lp");
 
 		cplex.solve();
 		System.out.println("MASTER:: Optimal Value: " + cplex.getObjValue());
@@ -112,18 +97,11 @@ public class MasterContext {
 		
 		this.setXOptimal(x_optimal);
 		
-		//TODO: Do error handling here. Check status of optimization
-		//this.setX(Utils.setColumnInMatrix(this.getx(), x_optimal, this.getN() - 1));
-		//this.setX(x_optimal);
-		
 		return cplex.getObjValue();
 	}
 	
 	private double[] subtractOldMeanU(double[] xold)
-	{
-		//xold = Utils.scalerMultiply(xold, -1);
-		//return Utils.vectorAdd(Utils.vectorAdd(xold, this.xMean), this.u);
-		
+	{	
 		System.out.println("XOLD");
 		Utils.PrintArray(xold);
 		
@@ -141,11 +119,6 @@ public class MasterContext {
 		Utils.PrintArray(output);
 		return output;
 	}
-	
-//	public void setX(double[] value)
-//	{
-//		this.x_master = value;
-//	}
 	
 	public void setXOptimal(double[] value)
 	{
@@ -173,11 +146,6 @@ public class MasterContext {
 		this.T = (24*3600)/(15*60);
 		return this.T;
 	}
-	
-//	public double[] getx()
-//	{
-//		return this.x_master;
-//	}
 	
 	public double[] getu()
 	{
