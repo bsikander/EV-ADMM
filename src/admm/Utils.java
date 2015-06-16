@@ -55,14 +55,24 @@ public class Utils {
 			double[][] RArray = ((MLDouble)matfilereader.getMLArray("R")).getArray();
 			double[][] SmaxArray = ((MLDouble)matfilereader.getMLArray("S_max")).getArray(); //Conversion
 			double[][] SminArray = ((MLDouble)matfilereader.getMLArray("S_min")).getArray(); //Conversion
-			double test = 0.1;
+			
+			double[][] x_optimal = new double[dArray[0].length][1];
+			if(matfilereader.getMLArray("x_optimal") == null) {
+				for(int i=0; i< dArray[0].length;i++) {
+					x_optimal[i][0] = 0;
+				}
+			}
+			else
+				x_optimal = ((MLDouble)matfilereader.getMLArray("x_optimal")).getArray(); //Conversion
+			
 			SlaveData context = new SlaveData(
 											dArray[0], 
 											AArray[0], 
 											BArray, 
 											RArray[0][0],
 											getSingleArrayFromDouble(SmaxArray),
-											getSingleArrayFromDouble(SminArray)
+											getSingleArrayFromDouble(SminArray),
+											getSingleArrayFromDouble(x_optimal)
 											);
 			
 			return context;
@@ -94,10 +104,10 @@ public class Utils {
 				xDoubleArray[i][0] = x[i];
 			}	
 			
-			MLArray xMLArray = new MLDouble("x_star",xDoubleArray);
+			MLArray xMLArray = new MLDouble("x_optimal",xDoubleArray);
 			list.add(xMLArray);
 			
-			matfileWriter.write("test.mat", list);
+			matfileWriter.write(filePath, list);
 			
 		}
 		catch(Exception e)

@@ -9,14 +9,18 @@ import ilog.concert.*;
 import ilog.cplex.*;
 public class TestCPLEX {
 public static void main(String[] args) throws FileNotFoundException, IloException {
-	double[] x1 = new double[30];
-	for(int i =0; i< 30;i++)
-	{
-		x1[i] = i;
-	}
-	Utils.SlaveXToMatFile("/Users/raja/Documents/Thesis/ADMM_matlab/EVs/home/1.mat",x1);
+//	double[] x1 = new double[30];
+//	for(int i =0; i< 30;i++)
+//	{
+//		x1[i] = i;
+//	}
+//	Utils.SlaveXToMatFile("/Users/raja/Documents/workspace/Hama-EVADMM/1.mat",x1);
 	
-	SlaveData test = Utils.LoadSlaveDataFromMatFile("/Users/raja/Documents/workspace/Hama-EVADMM/test.mat");
+	SlaveData daaaata = Utils.LoadSlaveDataFromMatFile("/Users/raja/Documents/workspace/Hama-EVADMM/2.mat");
+	Utils.PrintArray(daaaata.getXOptimal());
+	System.out.println("Total Size: " + daaaata.getXOptimal().length);
+	
+	//SlaveData test = Utils.LoadSlaveDataFromMatFile("/Users/raja/Documents/workspace/Hama-EVADMM/test.mat");
 	
 	
 	//Data of master iteration 1. This will generate the output for iteration 2
