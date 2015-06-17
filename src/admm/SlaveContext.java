@@ -63,7 +63,12 @@ public class SlaveContext {
 		OutputStream out = new FileOutputStream("logfile_slave");
 		cplex.setOut(out);
 		
-		IloNumVar[] x_i = cplex.numVarArray(x.length, Double.MIN_VALUE, Double.MAX_VALUE);
+		//IloNumVar[] x_i = cplex.numVarArray(x.length, Double.MIN_VALUE, Double.MAX_VALUE);
+		IloNumVar[] x_i = new IloNumVar[x.length];
+		
+		for(int i = 0; i < x.length ; i++) {
+			x_i[i] = cplex.numVar(xi_min[i], xi_max[i]);
+		}
 		
 	    double gammaAlpha = this.gamma * this.alpha;
 		double[] data = subtractOldMeanU(x);
@@ -83,9 +88,10 @@ public class SlaveContext {
 		
 		for(int j = 0; j < data.length ; j++ )
 		{
+			//This constraint is already defined in the variable boundaries.
 			//x_min <= x_i <= x_max
-			cplex.addLe(x_i[j], xi_max[j]);
-			cplex.addGe(x_i[j], xi_min[j]);
+//			cplex.addLe(x_i[j], xi_max[j]);
+//			cplex.addGe(x_i[j], xi_min[j]);
  
 			
 			//A_i*x_i = R
@@ -110,7 +116,8 @@ public class SlaveContext {
 			cplex.addGe(cplex.sum(BXExpGe), this.slaveData.getSmin()[h]);
 		}
 		
-		//cplex.exportModel("EV.lp");
+		//if(firstIteration)
+			//cplex.exportModel("EV.lp");
 		
 		cplex.solve();
 		

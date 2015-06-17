@@ -5,13 +5,6 @@ import ilog.concert.IloException;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-
-
-
-//import org.apache.commons.math3.linear.MatrixUtils;
-//import org.apache.commons.math3.linear.RealMatrix;
-import org.apache.hadoop.io.IntWritable;
-import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hama.bsp.BSP;
