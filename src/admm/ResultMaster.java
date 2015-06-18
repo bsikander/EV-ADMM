@@ -22,7 +22,7 @@ public class ResultMaster {
 		this.evAverage = evAverageValue;
 	}
 	
-	public void printResult(int count)
+	public String printResult(int count)
 	{
 		double[] temp = evAverage;
 		
@@ -43,10 +43,15 @@ public class ResultMaster {
 			sumu+=d;
 		
 		if(count>0) {
-			System.out.println("M:=> " + this.peerName + " \t " + this.iteration + " \t\t " + this.ev + " \t " + this.costValue + " \t " + x_evSum + " \t " + sum  + " \t " + sumxMean + " \t " + sumu + "\t" + this.x_master_optimal[0] + "\t" + this.xMean[0] + "\t" + this.u[0]);
+			String print = "M:=> " + this.peerName + " \t " + this.iteration + " \t\t " + this.ev + " \t " + this.costValue + " \t " + x_evSum + " \t " + sum  + " \t " + sumxMean + " \t " + sumu + "\t" + this.x_master_optimal[0] + "\t" + this.xMean[0] + "\t" + this.u[0];
+			System.out.println(print);
+			return print;
 		}
-		else
-			System.out.println("M:=> " + this.peerName + " \t " + this.iteration + " \t\t " + this.ev + " \t " + this.costValue + " \t " + x_evSum + " \t " + sum  + " \t " + sumxMean + " \t " + sumu + "\t" + this.x_master_optimal[0] + "\t" + this.xMean[0] + "\t" + this.u[0]);
+		else {
+			String print = "M:=> " + this.peerName + " \t " + this.iteration + " \t\t " + this.ev + " \t " + this.costValue + " \t " + x_evSum + " \t " + sum  + " \t " + sumxMean + " \t " + sumu + "\t" + this.x_master_optimal[0] + "\t" + this.xMean[0] + "\t" + this.u[0];
+			System.out.println(print);
+			return print;
+		}
 		
 	}
 }

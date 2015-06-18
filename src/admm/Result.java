@@ -22,7 +22,7 @@ public class Result {
 		this.cost_value = costvalue;
 	}
 	
-	public void printResult()
+	public String printResult()
 	{
 		double sum = 0;
 		for(double d: this.x_optimal)
@@ -40,7 +40,9 @@ public class Result {
 		for(double d: this.u)
 			sumu+=d;
 		
-		System.out.println(this.peerName + " \t " + this.Iteration + " \t\t " + this.EV_number + " \t " + this.cost_value + " \t " + sum + " \t " + sumxold + " \t " + sumxMean + " \t " + sumu);
+		String print = this.peerName + " \t " + this.Iteration + " \t\t " + this.EV_number + " \t " + this.cost_value + " \t " + sum + " \t " + sumxold + " \t " + sumxMean + " \t " + sumu;
+		System.out.println(print);
+		return print;
 		
 	}
 	

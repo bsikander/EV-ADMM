@@ -5,13 +5,15 @@ import ilog.concert.IloException;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+
+import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hama.bsp.BSP;
 import org.apache.hama.bsp.BSPPeer;
 import org.apache.hama.bsp.sync.SyncException;
 
-public class EVADMMBsp extends BSP<NullWritable, NullWritable, NullWritable, NullWritable, Text>{
+public class EVADMMBsp extends BSP<NullWritable, NullWritable, IntWritable, Text, Text>{
 	private String masterTask;
 	MasterContext masterContext;
 	SlaveContext slaveContext;
@@ -27,7 +29,7 @@ public class EVADMMBsp extends BSP<NullWritable, NullWritable, NullWritable, Nul
 	List<ResultMaster> resultMasterList = new ArrayList<ResultMaster>();
 	
 	@Override
-	public void bsp(BSPPeer<NullWritable, NullWritable, NullWritable, NullWritable, Text> peer) throws IOException, SyncException, InterruptedException {
+	public void bsp(BSPPeer<NullWritable, NullWritable,IntWritable, Text, Text> peer) throws IOException, SyncException, InterruptedException {
 		int k = 0; //iteration counter
 		
 		if(peer.getPeerName().equals(this.masterTask)) //The master task
@@ -117,8 +119,11 @@ public class EVADMMBsp extends BSP<NullWritable, NullWritable, NullWritable, Nul
 			
 			System.out.println("\\\\\\\\MASTER OUTPUT\\\\\\\\");
 			int count=0;
+			String printResult = "";
 			for(ResultMaster r : resultMasterList){
-				r.printResult(count);
+				 printResult = r.printResult(count);
+				 peer.write(new IntWritable(1), new Text(printResult));
+				
 				count++;
 			}
 			System.out.println("\\\\\\\\MASTER OUTPUT - END\\\\\\\\");
@@ -166,8 +171,10 @@ public class EVADMMBsp extends BSP<NullWritable, NullWritable, NullWritable, Nul
 				
 				peer.sync(); //Send all the data
 				if(finish == true) {
+					String printResult = "";
 					for(Result r : resultList){
-						r.printResult();
+						printResult = r.printResult();
+						peer.write(new IntWritable(1), new Text(printResult));
 					}
 					
 					break;
@@ -179,13 +186,13 @@ public class EVADMMBsp extends BSP<NullWritable, NullWritable, NullWritable, Nul
 	
 	@Override
     public void cleanup(
-        BSPPeer<NullWritable, NullWritable, NullWritable, NullWritable, Text> peer)
+        BSPPeer<NullWritable, NullWritable, IntWritable, Text, Text> peer)
         throws IOException {
 		
       }
 	
 	@Override
-    public void setup(BSPPeer<NullWritable, NullWritable, NullWritable, NullWritable, Text> peer) throws IOException, SyncException, InterruptedException {
+    public void setup(BSPPeer<NullWritable, NullWritable, IntWritable, Text, Text> peer) throws IOException, SyncException, InterruptedException {
 		// Choose one as a master
 		this.masterTask = peer.getPeerName(0); //0 is out master
 		
@@ -211,7 +218,7 @@ public class EVADMMBsp extends BSP<NullWritable, NullWritable, NullWritable, Nul
 		return false;
 	}
 	
-	private void sendFinishMessage(BSPPeer<NullWritable, NullWritable, NullWritable, NullWritable, Text> peer) throws IOException
+	private void sendFinishMessage(BSPPeer<NullWritable, NullWritable, IntWritable, Text, Text> peer) throws IOException
 	{
 		for(String peerName: peer.getAllPeerNames()) {
 			if(!peerName.equals(this.masterTask)) {
@@ -220,17 +227,17 @@ public class EVADMMBsp extends BSP<NullWritable, NullWritable, NullWritable, Nul
 		}
 	}
 	
-	private void sendxMeanAndUToSlaves(BSPPeer<NullWritable, NullWritable, NullWritable, NullWritable, Text> peer, NetworkObjectMaster object, String peerName) throws IOException
+	private void sendxMeanAndUToSlaves(BSPPeer<NullWritable, NullWritable, IntWritable, Text, Text> peer, NetworkObjectMaster object, String peerName) throws IOException
 	{
 		peer.send(peerName, new Text(Utils.networkMasterToJson(object)));
 	}
 	
-	private void sendXOptimalToMaster(BSPPeer<NullWritable, NullWritable, NullWritable, NullWritable, Text> peer, NetworkObjectSlave object) throws IOException
+	private void sendXOptimalToMaster(BSPPeer<NullWritable, NullWritable, IntWritable, Text, Text> peer, NetworkObjectSlave object) throws IOException
 	{	
 		peer.send(this.masterTask, new Text(Utils.networkSlaveToJson(object)));
 	}
 	
-	private double[] receiveSlaveOptimalValuesAndUpdateX(BSPPeer<NullWritable, NullWritable, NullWritable, NullWritable, Text> peer) throws IOException
+	private double[] receiveSlaveOptimalValuesAndUpdateX(BSPPeer<NullWritable, NullWritable, IntWritable, Text, Text> peer) throws IOException
 	{
 		//List<MasterContext> list = new ArrayList<MasterContext>();
 		NetworkObjectSlave slave;
@@ -246,7 +253,7 @@ public class EVADMMBsp extends BSP<NullWritable, NullWritable, NullWritable, Nul
 		return averageXReceived;
 	}
 	
-	private NetworkObjectMaster receiveMasterUAndXMean(BSPPeer<NullWritable, NullWritable, NullWritable, NullWritable, Text> peer) throws IOException
+	private NetworkObjectMaster receiveMasterUAndXMean(BSPPeer<NullWritable, NullWritable, IntWritable, Text, Text> peer) throws IOException
 	{	
 		NetworkObjectMaster master = null;
 		Text receivedJson;
@@ -259,7 +266,7 @@ public class EVADMMBsp extends BSP<NullWritable, NullWritable, NullWritable, Nul
 		return master;
 	}
 	
-	private NetworkObjectMaster receiveMasterUAndXMeanList(BSPPeer<NullWritable, NullWritable, NullWritable, NullWritable, Text> peer) throws IOException
+	private NetworkObjectMaster receiveMasterUAndXMeanList(BSPPeer<NullWritable, NullWritable, IntWritable, Text, Text> peer) throws IOException
 	{
 		NetworkObjectMaster master = new NetworkObjectMaster();
 		Text receivedJson;
