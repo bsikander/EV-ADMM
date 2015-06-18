@@ -98,6 +98,9 @@ public class EVADMMBsp extends BSP<NullWritable, NullWritable, NullWritable, Nul
 					System.out.println("---->U -END<----");
 					
 					resultMasterList.add(new ResultMaster(peer.getPeerName(),k,0,masterContext.getu(),masterContext.getxMean(),masterContext.getXOptimal(),costvalue,slaveAverageOptimalValue));
+					
+					
+					//checkConvergence(x, x_old, xMean, xMean_old, N)
 
 				} catch (IloException e) {
 					// TODO Auto-generated catch block
