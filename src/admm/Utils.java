@@ -7,6 +7,10 @@ import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.hadoop.io.IntWritable;
+import org.apache.hadoop.io.NullWritable;
+import org.apache.hadoop.io.Text;
+import org.apache.hama.bsp.BSPPeer;
 import org.codehaus.jackson.map.ObjectMapper;
 
 import com.jmatio.io.MatFileReader;
@@ -42,10 +46,11 @@ public class Utils {
 		}
 	}
 	
-	public static SlaveData LoadSlaveDataFromMatFile(String filePath, boolean isFirstIteration)
+	public static SlaveData LoadSlaveDataFromMatFile(String filePath, boolean isFirstIteration, BSPPeer<NullWritable, NullWritable,IntWritable, Text, Text> peer) throws IOException
 	{
 		try
 		{
+			peer.write(new IntWritable(1), new Text("Inside LOAD SLAVE DATA FROM MAT FILE"));
 			MatFileReader matfilereader = new MatFileReader(filePath);
 			double[][] dArray = ((MLDouble)matfilereader.getMLArray("d")).getArray();
 			double[][] AArray = ((MLDouble)matfilereader.getMLArray("A")).getArray();
@@ -56,12 +61,19 @@ public class Utils {
 			
 			double[][] x_optimal = new double[dArray[0].length][1];
 			if(matfilereader.getMLArray("x_optimal") == null || isFirstIteration == true) {
+				peer.write(new IntWritable(1), new Text("X_OTIMAL NOT FOUND .. WRITING ZERO"));
 				for(int i=0; i< dArray[0].length;i++) {
 					x_optimal[i][0] = 0;
 				}
 			}
-			else
+			else {
 				x_optimal = ((MLDouble)matfilereader.getMLArray("x_optimal")).getArray(); //Conversion
+				
+				peer.write(new IntWritable(1), new Text("X_OPTIMAL FOUND"));
+				Utils.PrintArray(getSingleArrayFromDouble(x_optimal));
+			}
+			
+			peer.write(new IntWritable(1), new Text(Utils.convertDoubleArrayToString(getSingleArrayFromDouble(x_optimal))));
 			
 			SlaveData context = new SlaveData(
 											dArray[0], 
@@ -78,6 +90,7 @@ public class Utils {
 		catch(Exception e)
 		{
 			System.out.println("Exception in LoadSlaveDataFromMatFile function in Utils" + e.getMessage());
+			peer.write(new IntWritable(1), new Text(e.getMessage()));
 			return null;
 		}
 	}
@@ -112,6 +125,14 @@ public class Utils {
 		{
 			System.out.println("Exception in LoadSlaveDataFromMatFile function in Utils" + e.getMessage());
 		}
+	}
+	
+	private static String convertDoubleArrayToString(double[] arr) {
+		String result = "";
+		for(int i=0; i< arr.length; i++){
+			result += arr[i];
+		}
+		return result;
 	}
 	
 	private static double[] getSingleArrayFromDouble(double[][] dArray)
