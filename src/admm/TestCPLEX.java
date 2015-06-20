@@ -16,9 +16,9 @@ public static void main(String[] args) throws FileNotFoundException, IloExceptio
 //	}
 //	Utils.SlaveXToMatFile("/Users/raja/Documents/workspace/Hama-EVADMM/1.mat",x1);
 	
-	SlaveData daaaata = Utils.LoadSlaveDataFromMatFile("/Users/raja/Documents/workspace/Hama-EVADMM/2.mat",true);
-	Utils.PrintArray(daaaata.getXOptimal());
-	System.out.println("Total Size: " + daaaata.getXOptimal().length);
+//	SlaveData daaaata = Utils.LoadSlaveDataFromMatFile("/Users/raja/Documents/workspace/Hama-EVADMM/2.mat",true);
+//	Utils.PrintArray(daaaata.getXOptimal());
+//	System.out.println("Total Size: " + daaaata.getXOptimal().length);
 	
 	//SlaveData test = Utils.LoadSlaveDataFromMatFile("/Users/raja/Documents/workspace/Hama-EVADMM/test.mat");
 	

@@ -145,17 +145,17 @@ public class EVADMMBsp extends BSP<NullWritable, NullWritable, IntWritable, Text
 				}
 					
 				for(Integer evId: masterData.getEV()) {
-
+					peer.write(new IntWritable(1), new Text(EV_PATH + (evId +1) + ".mat"));
 					slaveContext = new SlaveContext(EV_PATH + (evId +1) + ".mat", 
 							masterData.getxMean(), 
 							masterData.getU(),
 							evId,
-							RHO, isFirstIteration);
+							RHO, isFirstIteration, peer);
 					try {
 						System.out.println("Slave: " + peer.getPeerName() + ":: Starting Slave optimization");
 						//Do optimization and write the x_optimal to mat file
 						double cost = slaveContext.optimize();
-						
+						peer.write(new IntWritable(1), new Text("Optimized"));
 						resultList.add(new Result(peer.getPeerName(),k,evId, slaveContext.getX(),masterData.getxMean(),masterData.getU(),slaveContext.getXOptimalSlave(),cost));
 						
 						NetworkObjectSlave slave = new NetworkObjectSlave(slaveContext.getXOptimalSlave(), slaveContext.getCurrentEVNo());
@@ -165,6 +165,7 @@ public class EVADMMBsp extends BSP<NullWritable, NullWritable, IntWritable, Text
 					} catch (IloException e) {
 						// TODO Auto-generated catch block
 						e.printStackTrace();
+						peer.write(new IntWritable(1), new Text(e.getMessage()));
 					}
 				}
 				isFirstIteration = false;

@@ -2,6 +2,7 @@ package admm;
 
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.OutputStream;
 
 import ilog.concert.IloException;
@@ -13,6 +14,12 @@ import ilog.cplex.IloCplex;
 
 
 
+
+
+import org.apache.hadoop.io.IntWritable;
+import org.apache.hadoop.io.NullWritable;
+import org.apache.hadoop.io.Text;
+import org.apache.hama.bsp.BSPPeer;
 //import org.apache.commons.math3.linear.MatrixUtils;
 //import org.apache.commons.math3.linear.RealMatrix;
 import org.codehaus.jackson.annotate.JsonProperty;
@@ -34,11 +41,12 @@ public class SlaveContext {
 	private String evFileName;
 	private boolean firstIteration = true;
 	
-	public SlaveContext(String fileName, double[] xMean, double[] u, int currentEVNo, double rhoValue, boolean isFirstIteration)
+	public SlaveContext(String fileName, double[] xMean, double[] u, int currentEVNo, double rhoValue, boolean isFirstIteration, BSPPeer<NullWritable, NullWritable,IntWritable, Text, Text> peer) throws IOException
 	{	
 		firstIteration = isFirstIteration;
 		
-		slaveData = Utils.LoadSlaveDataFromMatFile(fileName, firstIteration);
+		slaveData = Utils.LoadSlaveDataFromMatFile(fileName, firstIteration, peer);
+		peer.write(new IntWritable(1), new Text("OUT"));
 		this.x = slaveData.getXOptimal(); //Read the last optimal value directly from the .mat file
 		System.out.println("==============================");
 		Utils.PrintArray(this.x);

@@ -1,7 +1,12 @@
 package admm;
 
 import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
 
+import org.apache.hadoop.conf.Configured;
+import org.apache.hadoop.fs.FileStatus;
+import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hama.HamaConfiguration;
 import org.apache.hama.bsp.BSPJob;
@@ -9,9 +14,22 @@ import org.apache.hama.bsp.FileInputFormat;
 import org.apache.hama.bsp.TextInputFormat;
 
 public class Main {
-	public static void main(String[] args) throws IOException, InterruptedException, ClassNotFoundException {		
+	public static void main(String[] args) throws IOException, InterruptedException, ClassNotFoundException, URISyntaxException {		
 		HamaConfiguration conf = new HamaConfiguration();
 		BSPJob job = new BSPJob(conf);
+		
+//		//TESTING HDFS ACCESS DIRECTLY FROM CODE - IT WORKS
+//		
+//		//System.out.println(conf..toString());
+//		FileSystem fs = FileSystem.get(new URI("hdfs://localhost:54310/"), conf);
+//		Path workingPath = fs.getWorkingDirectory();
+//		System.out.println(workingPath.toString());
+//		fs.printStatistics();
+//		FileStatus test = fs.getFileStatus(new Path("test/1.mat"));
+//		System.out.println(test.getPath().toString());
+//		//fs.get(new URI("hdfs://localhost:54310/user/raja/test/1.mat"), conf);
+//		
+//		//TESTING HDFS ACCESS DIRECTLY FROM CODE - IT WORKS - END
 		
 		if(args.length < 3) {
 			printUsage();
@@ -50,7 +68,7 @@ public class Main {
 		
 		job.setNumBspTask (Integer.parseInt(job.get(Constants.EVADMM_BSP_TASK)) );
 		job.setOutputPath(new Path(job.get(Constants.EVADMM_OUTPUT_PATH)));
-		
+		System.out.println("Starting the job");
 		job.waitForCompletion(true);
 		System.out.print("end");
 	}
