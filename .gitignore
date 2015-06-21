@@ -1,5 +1,5 @@
-bin/
-output/
+/bin/
+/output/
 logfile_master
 logfile_slave
-MATLAB/
+/MATLAB/
