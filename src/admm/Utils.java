@@ -1,18 +1,28 @@
 package admm;
 
+import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.FSDataInputStream;
+import org.apache.hadoop.fs.FileSystem;
+import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hama.bsp.BSPPeer;
 import org.codehaus.jackson.map.ObjectMapper;
 
+import com.google.common.io.ByteStreams;
 import com.jmatio.io.MatFileReader;
 import com.jmatio.io.MatFileWriter;
 import com.jmatio.types.MLArray;
@@ -46,12 +56,40 @@ public class Utils {
 		}
 	}
 	
+	private static FileSystem getFSObject(Configuration conf) throws IOException, URISyntaxException
+	{
+		FileSystem fs = FileSystem.get(new URI("hdfs://localhost:54310/"), conf);
+		return fs;
+	}
+	
+	private static File getFileFromHDFS(Configuration conf, String filePath) throws IOException, URISyntaxException {
+		FileSystem fs = getFSObject(conf);
+		FSDataInputStream in = fs.open(new Path(filePath));
+		File tempMatFile = stream2file(in, filePath.split("//")[filePath.split("//").length - 1]);
+		
+		return tempMatFile;
+	}
+	
 	public static SlaveData LoadSlaveDataFromMatFile(String filePath, boolean isFirstIteration, BSPPeer<NullWritable, NullWritable,IntWritable, Text, Text> peer) throws IOException
 	{
 		try
-		{
+		{//			//System.out.println(conf..toString());
+//			FileSystem fs = FileSystem.get(new URI("hdfs://localhost:54310/"), peer.getConfiguration());
+//			String fileSystemPath = fs.getWorkingDirectory().toString() + "/test/1.mat";
+//			fs.get
+//			System.out.println(workingPath.toString());
+//			fs.printStatistics();
+//			FileStatus test = fs.getFileStatus(new Path("test/1.mat"));
+//			System.out.println(test.getPath().toString());
+//			//fs.get(new URI("hdfs://localhost:54310/user/raja/test/1.mat"), conf);
+			
+			//File tempMatFile = getFileFromHDFS(peer.getConfiguration(), filePath);
+	
 			peer.write(new IntWritable(1), new Text("Inside LOAD SLAVE DATA FROM MAT FILE"));
+			//MatFileReader matfilereader = new MatFileReader(tempMatFile);
+			
 			MatFileReader matfilereader = new MatFileReader(filePath);
+			
 			double[][] dArray = ((MLDouble)matfilereader.getMLArray("d")).getArray();
 			double[][] AArray = ((MLDouble)matfilereader.getMLArray("A")).getArray();
 			double[][] BArray = ((MLDouble)matfilereader.getMLArray("B")).getArray();
@@ -126,6 +164,16 @@ public class Utils {
 			System.out.println("Exception in LoadSlaveDataFromMatFile function in Utils" + e.getMessage());
 		}
 	}
+	
+	public static File stream2file (InputStream in, String fileName) throws IOException {
+        final File tempFile = File.createTempFile(fileName, ".tmp");
+        tempFile.deleteOnExit();
+        try (FileOutputStream out = new FileOutputStream(tempFile)) {
+            //IOUtils.copy(in, out);
+        	ByteStreams.copy(in, out);
+        }
+        return tempFile;
+    }
 	
 	private static String convertDoubleArrayToString(double[] arr) {
 		String result = "";

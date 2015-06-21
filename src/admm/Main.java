@@ -1,10 +1,13 @@
 package admm;
 
+import java.io.File;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
 
 import org.apache.hadoop.conf.Configured;
+import org.apache.hadoop.fs.FSDataOutputStream;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
@@ -20,14 +23,24 @@ public class Main {
 		
 //		//TESTING HDFS ACCESS DIRECTLY FROM CODE - IT WORKS
 //		
-//		//System.out.println(conf..toString());
+		//System.out.println(conf..toString());
 //		FileSystem fs = FileSystem.get(new URI("hdfs://localhost:54310/"), conf);
 //		Path workingPath = fs.getWorkingDirectory();
 //		System.out.println(workingPath.toString());
 //		fs.printStatistics();
+//		fs.copyToLocalFile(new Path("test/1.mat"), new Path("/Users/raja/Desktop/"));
+//		File.
+//		fs.create(new Path("test/1.mat"), true);
+//		fs.delete(new Path("test/2.mat"));
+//		FSDataOutputStream dos = fs.create(new Path("/test/1.mat"));
+//		
+//		OutputStream outputStream = dos;
+		//File f = new File(new URI("hdfs://localhost:54310/test/1.mat"));
+		
+		
 //		FileStatus test = fs.getFileStatus(new Path("test/1.mat"));
 //		System.out.println(test.getPath().toString());
-//		//fs.get(new URI("hdfs://localhost:54310/user/raja/test/1.mat"), conf);
+		//fs.get(new URI("hdfs://localhost:54310/user/raja/test/1.mat"), conf);
 //		
 //		//TESTING HDFS ACCESS DIRECTLY FROM CODE - IT WORKS - END
 		
