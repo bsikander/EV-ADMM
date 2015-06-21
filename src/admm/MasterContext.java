@@ -4,6 +4,8 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.OutputStream;
 
+import org.apache.hadoop.conf.Configuration;
+
 import ilog.concert.IloException;
 import ilog.concert.IloLinearNumExpr;
 import ilog.concert.IloNumExpr;
@@ -31,9 +33,9 @@ public class MasterContext {
 	
 	private double[] u;
 	
-	public MasterContext(String inputPath, int evCount, double rhoValue)
+	public MasterContext(String inputPath, int evCount, double rhoValue, Configuration conf)
 	{
-		masterData = Utils.LoadMasterDataFromMatFile(inputPath);
+		masterData = Utils.LoadMasterDataFromMatFile(inputPath, conf);
 		N_EV = evCount;
 		rho = rhoValue;
 		

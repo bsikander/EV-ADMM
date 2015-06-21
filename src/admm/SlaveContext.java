@@ -16,6 +16,8 @@ import ilog.cplex.IloCplex;
 
 
 
+
+import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.io.Text;
@@ -40,10 +42,12 @@ public class SlaveContext {
 	int currentEVNo;
 	private String evFileName;
 	private boolean firstIteration = true;
+	private Configuration conf;
 	
 	public SlaveContext(String fileName, double[] xMean, double[] u, int currentEVNo, double rhoValue, boolean isFirstIteration, BSPPeer<NullWritable, NullWritable,IntWritable, Text, Text> peer) throws IOException
 	{	
 		firstIteration = isFirstIteration;
+		conf = peer.getConfiguration();
 		
 		slaveData = Utils.LoadSlaveDataFromMatFile(fileName, firstIteration, peer);
 		peer.write(new IntWritable(1), new Text("OUT"));
@@ -140,7 +144,7 @@ public class SlaveContext {
 		}
 		
 		//Write the x_optimal to mat file
-		Utils.SlaveXToMatFile(evFileName, x_optimal);
+		Utils.SlaveXToMatFile(evFileName, x_optimal, conf);
 		
 		return cplex.getObjValue();
 	}

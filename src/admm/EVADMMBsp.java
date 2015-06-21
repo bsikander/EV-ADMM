@@ -12,8 +12,12 @@ import org.apache.hadoop.io.Text;
 import org.apache.hama.bsp.BSP;
 import org.apache.hama.bsp.BSPPeer;
 import org.apache.hama.bsp.sync.SyncException;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 public class EVADMMBsp extends BSP<NullWritable, NullWritable, IntWritable, Text, Text>{
+	public static final Log LOG = LogFactory.getLog(EVADMMBsp.class);
+	
 	private String masterTask;
 	MasterContext masterContext;
 	SlaveContext slaveContext;
@@ -35,12 +39,13 @@ public class EVADMMBsp extends BSP<NullWritable, NullWritable, IntWritable, Text
 		if(peer.getPeerName().equals(this.masterTask)) //The master task
 		{	
 			System.out.println("MASTER: Starting Iteration Loop");
+			LOG.info("MASTER: Starting Iteration Loop");
 			
 			//Calculate rnorm, snorm
 			//Calculate eps_pri and eps_dual
 			//Check convergence
 			//Update rho value
-			masterContext = new MasterContext(AGGREGATOR_PATH,EV_COUNT,RHO);
+			masterContext = new MasterContext(AGGREGATOR_PATH,EV_COUNT,RHO, peer.getConfiguration());
 			
 			while(k != DEFAULT_ADMM_ITERATIONS_MAX) //TODO: Or convergence is met
 			{	
@@ -123,6 +128,7 @@ public class EVADMMBsp extends BSP<NullWritable, NullWritable, IntWritable, Text
 			for(ResultMaster r : resultMasterList){
 				 printResult = r.printResult(count);
 				 peer.write(new IntWritable(1), new Text(printResult));
+				 LOG.info(printResult);
 				
 				count++;
 			}
@@ -176,6 +182,7 @@ public class EVADMMBsp extends BSP<NullWritable, NullWritable, IntWritable, Text
 					for(Result r : resultList){
 						printResult = r.printResult();
 						peer.write(new IntWritable(1), new Text(printResult));
+						LOG.info(printResult);
 					}
 					
 					break;

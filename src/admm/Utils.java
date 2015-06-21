@@ -30,13 +30,15 @@ import com.jmatio.types.MLDouble;
 
 public class Utils {
 	
-	public static MasterData LoadMasterDataFromMatFile(String filePath)
+	public static MasterData LoadMasterDataFromMatFile(String filePath, Configuration conf)
 	{
 		try
 		{
-			MatFileWriter writer = new MatFileWriter();
+			File tempMatFile = getFileFromHDFS(conf, filePath);
+			MatFileReader matfilereader = new MatFileReader(tempMatFile);
+			//MatFileWriter writer = new MatFileWriter();
 			 
-			MatFileReader matfilereader = new MatFileReader(filePath);
+			//MatFileReader matfilereader = new MatFileReader(filePath);
 			double[][] reArray = ((MLDouble)matfilereader.getMLArray("re")).getArray(); //Conversion
 			double[][] DArray = ((MLDouble)matfilereader.getMLArray("D")).getArray(); //Conversion
 			double[][] priceArray = ((MLDouble)matfilereader.getMLArray("price")).getArray();
@@ -51,7 +53,7 @@ public class Utils {
 		}
 		catch(Exception e)
 		{
-			System.out.println("Exception in LoadMasterData function in Utils");
+			System.out.println("Exception in LoadMasterData function in Utils" + e.getMessage() + " == filePath: " + filePath);
 			return null;
 		}
 	}
@@ -65,7 +67,7 @@ public class Utils {
 	private static File getFileFromHDFS(Configuration conf, String filePath) throws IOException, URISyntaxException {
 		FileSystem fs = getFSObject(conf);
 		FSDataInputStream in = fs.open(new Path(filePath));
-		File tempMatFile = stream2file(in, filePath.split("//")[filePath.split("//").length - 1]);
+		File tempMatFile = stream2file(in, filePath.split("/")[filePath.split("/").length - 1]);
 		
 		return tempMatFile;
 	}
@@ -83,12 +85,12 @@ public class Utils {
 //			System.out.println(test.getPath().toString());
 //			//fs.get(new URI("hdfs://localhost:54310/user/raja/test/1.mat"), conf);
 			
-			//File tempMatFile = getFileFromHDFS(peer.getConfiguration(), filePath);
+			File tempMatFile = getFileFromHDFS(peer.getConfiguration(), filePath);
 	
 			peer.write(new IntWritable(1), new Text("Inside LOAD SLAVE DATA FROM MAT FILE"));
-			//MatFileReader matfilereader = new MatFileReader(tempMatFile);
+			MatFileReader matfilereader = new MatFileReader(tempMatFile);
 			
-			MatFileReader matfilereader = new MatFileReader(filePath);
+			//MatFileReader matfilereader = new MatFileReader(filePath);
 			
 			double[][] dArray = ((MLDouble)matfilereader.getMLArray("d")).getArray();
 			double[][] AArray = ((MLDouble)matfilereader.getMLArray("A")).getArray();
@@ -133,12 +135,14 @@ public class Utils {
 		}
 	}
 	
-	public static void SlaveXToMatFile(String filePath, double[] x)
+	public static void SlaveXToMatFile(String filePath, double[] x, Configuration conf)
 	{
 		try
 		{
 			MatFileWriter matfileWriter = new MatFileWriter();
-			MatFileReader matfileReader = new MatFileReader(filePath);
+			//MatFileReader matfileReader = new MatFileReader(filePath);
+			File tempMatFile = getFileFromHDFS(conf, filePath);
+			MatFileReader matfileReader = new MatFileReader(tempMatFile);
 			
 			List<MLArray> list = new ArrayList<MLArray>();
 			list.add((matfileReader.getMLArray("d")));
@@ -155,9 +159,16 @@ public class Utils {
 			
 			MLArray xMLArray = new MLDouble("x_optimal",xDoubleArray);
 			list.add(xMLArray);
+			//matfileWriter.write(filePath, list);
 			
-			matfileWriter.write(filePath, list);
+			final File tempFile = File.createTempFile("saveTemp", ".tmp"); //Create a temp file
+			tempFile.deleteOnExit();
+			String tempPath = tempFile.getAbsolutePath(); //Get absolute path of temp file
 			
+			matfileWriter.write(tempPath, list); //Write to temp file
+			
+			FileSystem fs = getFSObject(conf);
+			fs.copyFromLocalFile(new Path(tempPath), new Path(filePath)); //Copy the temp file to HDFS
 		}
 		catch(Exception e)
 		{
@@ -326,7 +337,6 @@ public class Utils {
 		return average;
 	}
 
-	
 	public static double[] calculateSum(double[][] matrix)
 	{
 		double[] sumArray = new double[matrix.length];
