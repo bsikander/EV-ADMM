@@ -13,6 +13,7 @@ import ilog.concert.IloNumVar;
 import ilog.concert.IloQuadNumExpr;
 import ilog.cplex.IloCplex;
 
+
 //import org.apache.commons.math3.linear.MatrixUtils;
 //import org.apache.commons.math3.linear.RealMatrix;
 
@@ -52,11 +53,37 @@ public class MasterContext {
 		this.xa_min = m;
 		this.xa_max = m_max;
 		
+//		System.out.println("----PRINTING XA_MIN ");
+//		
+//		String data = "";
+//		data += "[";
+//		for(double d: xa_min){ 
+//			data += (d + ",");
+//		}
+//		data = data.substring(0,data.length() - 1);
+//		data+= "]";
+//		
+//		System.out.println(data);
+//		
+//		data = "";
+//		data += "[";
+//		for(double d: xa_max){ 
+//			data += (d + ",");
+//		}
+//		data = data.substring(0,data.length() - 1);
+//		data+= "]";
+//		System.out.println(data);
+//		//Utils.PrintArray(xa_min);
+//		
+//		System.out.println("---- PRINTING XA_MAX");
+//		Utils.PrintArray(xa_max);
+		
 		xMean = Utils.getArrayWithData(getT(),0);
 	}
 	
 	public double optimize(double[] xold,int iteration) throws IloException, FileNotFoundException
 	{		
+		//Object src = new IloOplModelSource();
 		
 		IloCplex cplex = new IloCplex();
 		OutputStream out = new FileOutputStream("logfile_master");

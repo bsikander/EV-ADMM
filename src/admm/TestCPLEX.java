@@ -1,15 +1,343 @@
 package admm;
 
+import java.io.BufferedReader;
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
+import java.io.FileReader;
+import java.io.IOException;
 import java.io.OutputStream;
+import java.io.PrintWriter;
+import java.io.UnsupportedEncodingException;
+import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.List;
+
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.io.IntWritable;
+import org.apache.hadoop.io.NullWritable;
+import org.apache.hadoop.io.Text;
+import org.apache.hama.bsp.BSPPeer;
+
+import com.jmatio.io.MatFileReader;
+import com.jmatio.io.MatFileWriter;
+import com.jmatio.types.MLArray;
+import com.jmatio.types.MLDouble;
 
 import ilog.concert.*;
 import ilog.cplex.*;
 public class TestCPLEX {
-public static void main(String[] args) throws FileNotFoundException, IloException {
+public static void main(String[] args) throws IloException, IOException {
+	//parseTxtFileToGenerateMatFiles();
+	writeMasterFile();
+	writeSlaveFile();
+	writeDummyFile();
 }
+
+private static void writeDummyFile() throws FileNotFoundException, UnsupportedEncodingException {
+	String data = "";
+	
+	data = "12\n[]\n345";
+	writeFile(data, "Dmmy.txt");
+			}
+
+private static void writeSlaveFile() throws IOException {
+	SlaveData sdata;
+	String data = "";
+	
+	for(int i =1; i <= 10; i++) {
+		 sdata = LoadSlaveDataFromMatFile("/Users/raja/Documents/ADMM_matlab/EVs/home/" + i + ".mat");
+		 
+		 String x_max = "";
+		 String x_min = "";
+		 int ccc = 0;
+		 for(double d: sdata.getD())
+		 {
+			 x_max += d * 4 + ",";
+			 x_min += d * -4 + ",";
+			 //Utils.scalerMultiply(sdata.getD(), -4);
+			 ccc++;
+		 }
+		 data += "[";
+		 data += x_max.substring(0,x_max.length() - 1);
+		 data += "]|[";
+		 data += x_min.substring(0,x_min.length() - 1);
+		 data += "]|[";
+				 
+		 
+		 //data += "[4.0,4.0,4.0,4.0,4.0,4.0,4.0,4.0,4.0,4.0,4.0,4.0,4.0,4.0,4.0,4.0,4.0,4.0,4.0,4.0,4.0,4.0,4.0,4.0,4.0,4.0,4.0,4.0,4.0,4.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,4.0,4.0,4.0,4.0,4.0,4.0,4.0,4.0,4.0,4.0,4.0,4.0,4.0,4.0,4.0,4.0,4.0,4.0,4.0,4.0,4.0,4.0,4.0,4.0,4.0,4.0,4.0,4.0,4.0,4.0,4.0]";
+		 //data += "|[-4.0,-4.0,-4.0,-4.0,-4.0,-4.0,-4.0,-4.0,-4.0,-4.0,-4.0,-4.0,-4.0,-4.0,-4.0,-4.0,-4.0,-4.0,-4.0,-4.0,-4.0,-4.0,-4.0,-4.0,-4.0,-4.0,-4.0,-4.0,-4.0,-4.0,-0.0,-0.0,-0.0,-0.0,-0.0,-0.0,-0.0,-0.0,-0.0,-0.0,-0.0,-0.0,-0.0,-0.0,-0.0,-0.0,-0.0,-0.0,-0.0,-0.0,-0.0,-0.0,-0.0,-0.0,-0.0,-0.0,-0.0,-0.0,-0.0,-0.0,-0.0,-0.0,-0.0,-0.0,-0.0,-4.0,-4.0,-4.0,-4.0,-4.0,-4.0,-4.0,-4.0,-4.0,-4.0,-4.0,-4.0,-4.0,-4.0,-4.0,-4.0,-4.0,-4.0,-4.0,-4.0,-4.0,-4.0,-4.0,-4.0,-4.0,-4.0,-4.0,-4.0,-4.0,-4.0,-4.0]";
+//		 for(double d: sdata.getD()) {
+//			 data += String.valueOf(d) + ",";
+//		 }
+//		 data = data.substring(0,data.length() - 1);
+//		 data += "]|[";
+		 
+		 //data += "|[";
+		 
+		 for(double d: sdata.getA()) {
+			 data += String.valueOf(d) + ",";
+		 }
+		 data = data.substring(0,data.length() - 1);
+		 data += "]|" + sdata.getR() + "|1|0.0125|0.01" + "|["; //]|R_value|gamma_value|alpha_value|rho|[
+		 
+		 
+		 for(double d: sdata.getSmax()) {
+			 data += String.valueOf(d) + ",";
+		 }
+		 data = data.substring(0,data.length() - 1);
+		 data += "]|[";
+		 
+		 for(double d: sdata.getSmin()) {
+			 data += String.valueOf(d) + ",";
+		 }
+		 data = data.substring(0,data.length() - 1);
+		 data += "]|";
+		 
+		 for(double[] arr: sdata.getB()) {
+			 data += "[";
+			 for(double d : arr) {
+				 data += String.valueOf(d) + ",";
+			 }
+			 data = data.substring(0,data.length() - 1);
+			 data += "]";
+		 }
+		 
+		 data +="\n";
+		 
+	}
+	writeFile(data,"EVs.txt");
+}
+
+private static void writeMasterFile() throws FileNotFoundException, UnsupportedEncodingException
+{
+MasterData mData = LoadMasterDataFromMatFile("/Users/raja/Documents/ADMM_matlab/Aggregator/aggregator.mat");
+	
+	String data = "[";
+	
+	for(double d : mData.getPrice()) {
+		data += String.valueOf(d) + ",";
+	}
+	data = data.substring(0,data.length() - 1);
+	data += "]|[";
+	
+	for(double d : mData.getRe()) {
+		data += String.valueOf(d) + ",";
+	}
+	
+	data = data.substring(0,data.length() - 1);
+	data += "]|[";
+	
+	for(double d : mData.getD()) {
+		data += String.valueOf(d) + ",";
+	}
+	
+	data = data.substring(0,data.length() - 1);
+	data += "]";
+	
+//	double[] m = Utils.getArrayWithData(96,1);
+//	m = Utils.scalerMultiply(m, -100e3);
+//	
+//	for(double d: m) {
+//		data += d + ",";
+//	}
+//	data = data.substring(0,data.length() - 1);
+//	data += "]|[";
+//	
+//	double[] m_max = Utils.getArrayWithData(96,1);
+//	m_max = Utils.scalerMultiply(m_max, 60);
+//	
+//	for(double d: m) {
+//		data += d + ",";
+//	}
+//	data = data.substring(0,data.length() - 1);
+//	data += "]";
+	
+	data += "|[-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0]";
+	data += "|[60.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0]";
+	data += "|0.01";
+	writeFile(data, "aggregator.txt");
+}
+
+private static void writeFile(String data, String fileName) throws FileNotFoundException, UnsupportedEncodingException {
+	PrintWriter writer = new PrintWriter(fileName, "UTF-8");
+	writer.println(data);
+	
+	writer.close();
+}
+
+
+public static MasterData LoadMasterDataFromMatFile(String filePath)
+{
+	try
+	{	
+		MatFileReader matfilereader = new MatFileReader(filePath);
+		//MatFileWriter writer = new MatFileWriter();
+		 
+		//MatFileReader matfilereader = new MatFileReader(filePath);
+		double[][] reArray = ((MLDouble)matfilereader.getMLArray("re")).getArray(); //Conversion
+		double[][] DArray = ((MLDouble)matfilereader.getMLArray("D")).getArray(); //Conversion
+		double[][] priceArray = ((MLDouble)matfilereader.getMLArray("price")).getArray();
+		
+		MasterData context = new MasterData(
+											Utils.getSingleArrayFromDouble(reArray),
+											Utils.getSingleArrayFromDouble( DArray ), 
+											priceArray[0]
+											);
+		
+		return context;
+	}
+	catch(Exception e)
+	{
+		System.out.println("Exception in LoadMasterData function in Utils" + e.getMessage() + " == filePath: " + filePath);
+		return null;
+	}
+}
+
+
+public static SlaveData LoadSlaveDataFromMatFile(String filePath) throws IOException
+{
+	try
+	{		
+		MatFileReader matfilereader = new MatFileReader(filePath);
+		
+		//MatFileReader matfilereader = new MatFileReader(filePath);
+		
+		double[][] dArray = ((MLDouble)matfilereader.getMLArray("d")).getArray();
+		double[][] AArray = ((MLDouble)matfilereader.getMLArray("A")).getArray();
+		double[][] BArray = ((MLDouble)matfilereader.getMLArray("B")).getArray();
+		double[][] RArray = ((MLDouble)matfilereader.getMLArray("R")).getArray();
+		double[][] SmaxArray = ((MLDouble)matfilereader.getMLArray("S_max")).getArray(); //Conversion
+		double[][] SminArray = ((MLDouble)matfilereader.getMLArray("S_min")).getArray(); //Conversion
+		
+//		double[][] x_optimal = new double[dArray[0].length][1];
+//		if(matfilereader.getMLArray("x_optimal") == null || isFirstIteration == true) {
+//			for(int i=0; i< dArray[0].length;i++) {
+//				x_optimal[i][0] = 0;
+//			}
+//		}
+//		else {
+//			x_optimal = ((MLDouble)matfilereader.getMLArray("x_optimal")).getArray(); //Conversion
+//			
+//			peer.write(new IntWritable(1), new Text("X_OPTIMAL FOUND"));
+//			Utils.PrintArray(Utils.getSingleArrayFromDouble(x_optimal));
+//		}
+//		
+//		peer.write(new IntWritable(1), new Text(Utils.convertDoubleArrayToString(Utils.getSingleArrayFromDouble(x_optimal))));
+		
+		SlaveData context = new SlaveData(
+										dArray[0], 
+										AArray[0], 
+										BArray, 
+										RArray[0][0],
+										Utils.getSingleArrayFromDouble(SmaxArray),
+										Utils.getSingleArrayFromDouble(SminArray), null
+										//Utils.getSingleArrayFromDouble(x_optimal)
+										);
+		
+		return context;
+	}
+	catch(Exception e)
+	{
+		System.out.println("Exception in LoadSlaveDataFromMatFile function in Utils" + e.getMessage());
+		
+		return null;
+	}
+}
+
+public static void parseTxtFileToGenerateMatFiles() throws IOException {
+	BufferedReader br = new BufferedReader(new FileReader("/Users/raja/Documents/workspace/ADFHama/data/EVs.txt"));
+	 
+	String line = null;
+	int count = 1;
+	while ((line = br.readLine()) != null) {
+		WriteMatFile(line, count);
+		count++;
+	}
+ 
+	br.close();
+	
+}
+
+	public static void WriteMatFile(String input, int id) throws IOException
+	{
+		MatFileWriter matfileWriter = new MatFileWriter();
+		//MatFileReader matfileReader = new MatFileReader(filePath);
+		List<MLArray> list = parse(input);
+		
+		
+		matfileWriter.write("/Users/raja/Documents/workspace/ADFHama/data/mat_files/" + id + ".mat", list); //Write to temp file
+		
+	}
+	
+	private static List<MLArray> parse(String input) {
+		String[] splitData = input.split("\\|");
+		
+		List<MLArray> list = new ArrayList<MLArray>();
+		
+		list.add(getJMatArray( getArray(splitData[0]), "x_max1"));
+		list.add( getJMatArray( getArray(splitData[1]), "x_min1"));
+		list.add( getJMatArray(getArray(splitData[2]), "A1"));
+		list.add( getJMatArray( Double.parseDouble(splitData[3]), "R1"));
+		list.add( getJMatArray(Double.parseDouble(splitData[4]), "gamma1"));
+		list.add( getJMatArray(Double.parseDouble(splitData[5]), "alpha1"));
+		list.add( getJMatArray( Double.parseDouble(splitData[6]),"rho1"));
+		list.add( getJMatArray(getArray(splitData[7]),"S_max1"));
+		list.add( getJMatArray(getArray(splitData[8]), "S_min1"));
+		list.add(new MLDouble("B1", getDoubleArray(splitData[9])));
+		
+		return list;
+	}
+	
+	private static MLArray getJMatArray(double x, String name) {
+		double[][] xDoubleArray = new double[1][1];
+		xDoubleArray[0][0] = x;	
+		
+		MLArray xMLArray = new MLDouble(name,xDoubleArray);
+		return xMLArray;
+	}
+	
+	private static MLArray getJMatArray(double[] x, String name) {
+		double[][] xDoubleArray = new double[x.length][1];
+		for(int i =0; i< x.length; i++) {
+			xDoubleArray[i][0] = x[i];
+		}	
+		
+		MLArray xMLArray = new MLDouble(name,xDoubleArray);
+		return xMLArray;
+	}
+	
+	private static double[] getArray(String input) {
+		double[] arr;
+		//System.out.println("INPUT> :" + input);
+		input = input.substring(1,input.length() - 1); //remove [ ] symbols
+		String[] values = input.split(",");
+		arr = new double[values.length];
+		
+		int index = 0;
+		for(String s: values) {
+			arr[index] = Double.parseDouble(s);
+			index ++;
+		}
+		return arr;
+	}
+	
+	private static double[][] getDoubleArray(String input) {
+		double[][] arr;
+		
+		String[] values = input.split("]");
+		
+		int index =0;
+		arr = new double[values.length][];
+		
+		for(String s: values) {
+			s += "]";
+			arr[index] = getArray(s);
+			index++;
+		}
+		return arr;
+	}
+	
 
 }
 ////	double[] x1 = new double[30];

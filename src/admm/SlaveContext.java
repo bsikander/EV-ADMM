@@ -50,19 +50,27 @@ public class SlaveContext {
 		conf = peer.getConfiguration();
 		
 		slaveData = Utils.LoadSlaveDataFromMatFile(fileName, firstIteration, peer);
-		peer.write(new IntWritable(1), new Text("OUT"));
+		//peer.write(new IntWritable(1), new Text("OUT"));
 		this.x = slaveData.getXOptimal(); //Read the last optimal value directly from the .mat file
-		System.out.println("==============================");
-		Utils.PrintArray(this.x);
-		System.out.println("==============================");
+		//System.out.println("==============================");
+		//Utils.PrintArray(this.x);
+		//System.out.println("==============================");
 		
 		rho = rhoValue;
 		evFileName = fileName; 
 		
 		this.alpha = (0.05/3600) * (15*60);
+		//System.out.println(">>>>>>> APLHA: " + this.alpha);
 		
 		this.xi_max = Utils.scalerMultiply(this.slaveData.getD(), 4);
 		this.xi_min = Utils.scalerMultiply(this.slaveData.getD(), -4);
+		
+		//Remove this
+//		System.out.println("PRINTING XI_MAX and MIN");
+		//Utils.PrintArray(xi_max);
+		//Utils.PrintArray(xi_min);
+//		System.out.println("PRINTING XI_MAX and MIN");
+		//Remove this
 		
 		this.xMean = xMean;
 		this.u = u;
@@ -118,18 +126,30 @@ public class SlaveContext {
 			IloNumExpr[] BXExpLe = new IloNumExpr[this.slaveData.getB()[0].length];
 			IloNumExpr[] BXExpGe = new IloNumExpr[this.slaveData.getB()[0].length];
 			
+			//System.out.print("[");
 			for(int f=0; f < this.slaveData.getB()[0].length; f++)
 			{
+				//NOTE: REmove this start
+//				if(f == this.slaveData.getB()[0].length - 1)
+//				{
+//					System.out.print(this.slaveData.getB()[h][f]);
+//				}
+//				else
+//				System.out.print(this.slaveData.getB()[h][f] + ",");
+				//Note: remove this end
+				
 				BXExpLe[f] = cplex.prod(x_i[f],this.slaveData.getB()[h][f]);
 				BXExpGe[f] = cplex.prod(x_i[f],this.slaveData.getB()[h][f]);
 			}
+//			System.out.print("]");
+//			System.out.println();
 			
 			cplex.addLe(cplex.sum(BXExpLe), this.slaveData.getSmax()[h]);
 			cplex.addGe(cplex.sum(BXExpGe), this.slaveData.getSmin()[h]);
 		}
 		
 		//if(firstIteration)
-			//cplex.exportModel("EV.lp");
+			//cplex.exportModel("EV_" + currentEVNo + ".lp");
 		
 		cplex.solve();
 		
@@ -142,6 +162,9 @@ public class SlaveContext {
 		{
 			x_optimal[u] = cplex.getValues(x_i)[u];
 		}
+		
+		System.out.println("PRINTING X_OPTIMAL VALUE");
+		Utils.PrintArray(x_optimal);
 		
 		//Write the x_optimal to mat file
 		Utils.SlaveXToMatFile(evFileName, x_optimal, conf);

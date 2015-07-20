@@ -60,7 +60,8 @@ public class Utils {
 	
 	private static FileSystem getFSObject(Configuration conf) throws IOException, URISyntaxException
 	{
-		FileSystem fs = FileSystem.get(new URI("hdfs://localhost:54310/"), conf);
+		FileSystem fs = FileSystem.get(conf);
+		//FileSystem fs = FileSystem.get(new URI("hdfs://172.17.0.5:54310/"), conf);
 		return fs;
 	}
 	
@@ -186,7 +187,7 @@ public class Utils {
         return tempFile;
     }
 	
-	private static String convertDoubleArrayToString(double[] arr) {
+	public  static String convertDoubleArrayToString(double[] arr) {
 		String result = "";
 		for(int i=0; i< arr.length; i++){
 			result += arr[i];
@@ -194,7 +195,7 @@ public class Utils {
 		return result;
 	}
 	
-	private static double[] getSingleArrayFromDouble(double[][] dArray)
+	public static double[] getSingleArrayFromDouble(double[][] dArray)
 	{
 		double[] sArray = new double[dArray.length];
 		int i = 0;

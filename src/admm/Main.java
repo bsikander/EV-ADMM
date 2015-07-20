@@ -13,13 +13,16 @@ import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hama.HamaConfiguration;
 import org.apache.hama.bsp.BSPJob;
+import org.apache.hama.bsp.BSPJobClient;
+import org.apache.hama.bsp.ClusterStatus;
 import org.apache.hama.bsp.FileInputFormat;
+import org.apache.hama.bsp.NullInputFormat;
 import org.apache.hama.bsp.TextInputFormat;
 
 public class Main {
 	public static void main(String[] args) throws IOException, InterruptedException, ClassNotFoundException, URISyntaxException {		
 		HamaConfiguration conf = new HamaConfiguration();
-		BSPJob job = new BSPJob(conf);
+		BSPJob job = new BSPJob(conf, Main.class);
 		
 //		//TESTING HDFS ACCESS DIRECTLY FROM CODE - IT WORKS
 //		
@@ -55,14 +58,14 @@ public class Main {
 		job.setBspClass(EVADMMBsp.class);
 		job.setJarByClass(EVADMMBsp.class);
 		job.setJobName("EVADMM");
-		
+	
 		job.set(Constants.EVADMM_MAX_ITERATIONS, "4");
 		job.set(Constants.EVADMM_EV_COUNT, "4");
 		job.set(Constants.EVADMM_OUTPUT_PATH, "/Users/raja/Documents/workspace/Hama-EVADMM/output/");
 		job.set(Constants.EVADMM_AGGREGATOR_PATH, "/Users/raja/Documents/Thesis/ADMM_matlab/Aggregator/aggregator.mat");
 		job.set(Constants.EVADMM_EV_PATH, "/Users/raja/Documents/Thesis/ADMM_matlab/EVs/home/");
 		job.set(Constants.EVADMM_RHO, "0.01");
-		job.set(Constants.EVADMM_BSP_TASK, "2");
+		job.set(Constants.EVADMM_BSP_TASK, "4");
 		
 		if(args.length >=7)
 			job.set(Constants.EVADMM_RHO, args[6]);
@@ -78,8 +81,13 @@ public class Main {
 			job.set(Constants.EVADMM_EV_PATH, args[1]);
 		if(args.length >=1)
 			job.set(Constants.EVADMM_AGGREGATOR_PATH, args[0]);
-		
+
 		job.setNumBspTask (Integer.parseInt(job.get(Constants.EVADMM_BSP_TASK)) );
+		BSPJobClient jobClient = new BSPJobClient(conf);
+		ClusterStatus cluster = jobClient.getClusterStatus(true);
+//		job.setNumBspTask(cluster.getMaxTasks());
+		System.out.println("Max bsp task:" + cluster.getMaxTasks());
+		job.setInputFormat(NullInputFormat.class);
 		job.setOutputPath(new Path(job.get(Constants.EVADMM_OUTPUT_PATH)));
 		System.out.println("Starting the job");
 		job.waitForCompletion(true);
