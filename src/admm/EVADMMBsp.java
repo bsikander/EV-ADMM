@@ -293,12 +293,12 @@ public class EVADMMBsp extends BSP<NullWritable, NullWritable, IntWritable, Text
 		//	     rho=rho/2;
 	    // end
 		
-//		if(r_norm > 10* s_norm) {
-//			EVADMMBsp.RHO = 2*EVADMMBsp.RHO;
-//		}
-//		else if(s_norm > 10*r_norm) {
-//			EVADMMBsp.RHO = EVADMMBsp.RHO/2;
-//		}
+		if(r_norm > 10* s_norm) {
+			EVADMMBsp.RHO = 2*EVADMMBsp.RHO;
+		}
+		else if(s_norm > 10*r_norm) {
+			EVADMMBsp.RHO = EVADMMBsp.RHO/2;
+		}
 		
 		masterContext.setRho(EVADMMBsp.RHO);
 		
