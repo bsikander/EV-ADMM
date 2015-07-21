@@ -43,11 +43,13 @@ public class SlaveContext {
 	private String evFileName;
 	private boolean firstIteration = true;
 	private Configuration conf;
+	private double[] xOptimalDifference;
 	
 	public SlaveContext(String fileName, double[] xMean, double[] u, int currentEVNo, double rhoValue, boolean isFirstIteration, BSPPeer<NullWritable, NullWritable,IntWritable, Text, Text> peer) throws IOException
 	{	
 		firstIteration = isFirstIteration;
 		conf = peer.getConfiguration();
+		
 		
 		slaveData = Utils.LoadSlaveDataFromMatFile(fileName, firstIteration, peer);
 		//peer.write(new IntWritable(1), new Text("OUT"));
@@ -55,6 +57,9 @@ public class SlaveContext {
 		//System.out.println("==============================");
 		//Utils.PrintArray(this.x);
 		//System.out.println("==============================");
+		
+		xOptimalDifference = new double[this.x.length]; //Initialize the difference array
+		x_optimal = new double[this.x.length];
 		
 		rho = rhoValue;
 		evFileName = fileName; 
@@ -151,6 +156,9 @@ public class SlaveContext {
 		//if(firstIteration)
 			//cplex.exportModel("EV_" + currentEVNo + ".lp");
 		
+		//Save the old value
+		double[] xOptimalOld = x_optimal;
+		
 		cplex.solve();
 		
 		System.out.println("Slave Output value: " + cplex.getObjValue() + "  CurrentEV: " + this.currentEVNo);
@@ -165,6 +173,9 @@ public class SlaveContext {
 		
 		System.out.println("PRINTING X_OPTIMAL VALUE");
 		Utils.PrintArray(x_optimal);
+		
+		//Calculate x_i^k - x_i^k-1
+		xOptimalDifference = Utils.calculateVectorSubtraction(x_optimal, xOptimalOld);
 		
 		//Write the x_optimal to mat file
 		Utils.SlaveXToMatFile(evFileName, x_optimal, conf);
@@ -193,6 +204,11 @@ public class SlaveContext {
 	{
 		return this.alpha;
 	}
+	
+	public double[] getXOptimalDifference() {
+		return this.xOptimalDifference;
+	}
+	
 	
 	public double[] getXimax()
 	{

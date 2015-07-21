@@ -52,6 +52,8 @@ public class EVADMMBsp extends BSP<NullWritable, NullWritable, IntWritable, Text
 			
 			while(k != DEFAULT_ADMM_ITERATIONS_MAX) //TODO: Or convergence is met
 			{	
+				double[] slaveAverageOptimalValue = new double[masterContext.getT()]; //Moved up here to retain the value of old average of all the xoptimal
+				
 				try {
 					//Optimize + return the cost + save the optimal X* in the x matrix last column
 					int currentEV = 0;
@@ -86,11 +88,18 @@ public class EVADMMBsp extends BSP<NullWritable, NullWritable, IntWritable, Text
 					
 					peer.sync();
 					//Receive message
-					double[] slaveAverageOptimalValue = receiveSlaveOptimalValuesAndUpdateX(peer);
-					System.out.println("--------- AVERAGE AT MASTER ---------" );
-					Utils.PrintArray(slaveAverageOptimalValue);
-					System.out.println("--------- AVERAGE AT MASTER ---------" );
-					System.out.println(peer.getPeerName() + "Master 1.4:: Data sending complete. Doing Master optimiation");
+					//double[] s = new double[masterContext.getN()];
+					double[] oldXAverage = slaveAverageOptimalValue;
+					Pair<double[], double[][]> result = receiveSlaveOptimalValuesAndUpdateX(peer, masterContext.getN());
+					//slaveAverageOptimalValue = receiveSlaveOptimalValuesAndUpdateX(peer, slaveAverageOptimalValue, masterContext.getN());
+					
+					slaveAverageOptimalValue = result.first();
+					
+					
+//					System.out.println("--------- AVERAGE AT MASTER ---------" );
+//					Utils.PrintArray(slaveAverageOptimalValue);
+//					System.out.println("--------- AVERAGE AT MASTER ---------" );
+//					System.out.println(peer.getPeerName() + "Master 1.4:: Data sending complete. Doing Master optimiation");
 					
 					double costvalue = masterContext.optimize(masterContext.getXOptimal(),k);
 					
@@ -114,7 +123,25 @@ public class EVADMMBsp extends BSP<NullWritable, NullWritable, IntWritable, Text
 					resultMasterList.add(new ResultMaster(peer.getPeerName(),k,0,masterContext.getu(),masterContext.getxMean(),masterContext.getXOptimal(),costvalue,slaveAverageOptimalValue));
 					
 					
-					//checkConvergence(x, x_old, xMean, xMean_old, N)
+					//TODO:Uncomment the convergence logic here
+					//Add the master optimal value int he matrix to check the convergence
+//					double[][] xDifferenceMatrix = result.second();
+//					int time = 0;
+//					for(double d: masterContext.getXOptimal()) {
+//						xDifferenceMatrix[time][xDifferenceMatrix[0].length - 1] = d; //Add the xoptimal value at the end
+//						time++;
+//					}
+//					
+//					boolean converged = checkConvergence(xDifferenceMatrix, result.first(), oldXAverage, masterContext.getN(), masterContext.getu());
+//					//checkConvergence(x, x_old, xMean, xMean_old, N)
+//					if(converged == true) {
+//						System.out.println("////////////Converged/////////");
+//						break;
+//					}
+//					
+//					//Update rho is the code has not converged
+
+
 
 				} catch (IloException e) {
 					// TODO Auto-generated catch block
@@ -171,14 +198,16 @@ public class EVADMMBsp extends BSP<NullWritable, NullWritable, IntWritable, Text
 							masterData.getU(),
 							evId,
 							RHO, isFirstIteration, peer);
+					
 					try {
 						System.out.println("Slave: 1.4 " + peer.getPeerName() + ":: Starting Slave optimization");
 						//Do optimization and write the x_optimal to mat file
 						double cost = slaveContext.optimize();
+						
 						peer.write(new IntWritable(1), new Text("Optimized"));
 						resultList.add(new Result(peer.getPeerName(),k,evId, slaveContext.getX(),masterData.getxMean(),masterData.getU(),slaveContext.getXOptimalSlave(),cost));
 						
-						NetworkObjectSlave slave = new NetworkObjectSlave(slaveContext.getXOptimalSlave(), slaveContext.getCurrentEVNo());
+						NetworkObjectSlave slave = new NetworkObjectSlave(slaveContext.getXOptimalSlave(), slaveContext.getCurrentEVNo(), slaveContext.getXOptimalDifference());
 						System.out.println("Slave: 1.5 " + peer.getPeerName() + ":: Sending slave x* to Master");
 						sendXOptimalToMaster(peer, slave);
 						
@@ -232,19 +261,54 @@ public class EVADMMBsp extends BSP<NullWritable, NullWritable, IntWritable, Text
 		EV_COUNT = Integer.parseInt(peer.getConfiguration().get(Constants.EVADMM_EV_COUNT));
 	}
 	
-	private boolean checkConvergence(double[][] x, double[][] x_old, double[] xMean, double[] xMean_old, int N)
+	private boolean checkConvergence(double[][] x, double[] xMean, double[] xMean_old, int N, double[] u)
 	{
-		double[][] x_xoldMatrix = Utils.calculateMatrixSubtraction(x,x_old);
+		//double[][] x_xoldMatrix = Utils.calculateMatrixSubtraction(x,x_old);
 		double[] xMeanOld_xMean = Utils.calculateVectorSubtraction(xMean_old, xMean);
-		double[] result = Utils.addMatrixAndVector (x_xoldMatrix, xMeanOld_xMean);
+		double[] result = Utils.addMatrixAndVector (x, xMeanOld_xMean);
 		double[] s = Utils.scalerMultiply(result, -1*this.RHO*N);
 		double s_norm= Utils.calculateNorm(s);
-		double r_norm = Utils.calculateNorm(Utils.scaleVector(xMean, N));
+		//double r_norm = Utils.calculateNorm(Utils.scaleVector(xMean, N));
+		double r_norm = Utils.calculateNorm(xMean);
 		
-		if(r_norm <= 0.1 && s_norm <= 0.1)
+		//eps_pri = sqrt(T*N);
+		double eps_pri = Math.sqrt(xMean.length * N);
+		
+		//eps_dual= sqrt(N*T)*1e-4 + 1e-4 *norm(rho*u);
+		double eps_dual = (eps_pri * 0.0001) + (0.0001 * Utils.calculateNorm(Utils.scalerMultiply(u, EVADMMBsp.RHO)));
+		
+		if(r_norm <= eps_pri && s_norm <= eps_dual)
 			return true;
 		
+		//if r_norm > 10*s_norm
+		//	     rho=2*rho;
+	    // end
+	    // if s_norm > 10*r_norm
+		//	     rho=rho/2;
+	    // end
+		
+		if(r_norm > 10* s_norm) {
+			EVADMMBsp.RHO = 2*EVADMMBsp.RHO;
+		}
+		else if(s_norm > 10*r_norm) {
+			EVADMMBsp.RHO = EVADMMBsp.RHO/2;
+		}
+		
+		masterContext.setRho(EVADMMBsp.RHO);
+		
+		System.out.println("CONVERGED VALUES ////////// s_norm: " + s_norm + " -- r_norm: " + r_norm + " --eps_dual: " + eps_dual + " -- eps_pri" + eps_pri);
 		return false;
+//		double[][] x_xoldMatrix = Utils.calculateMatrixSubtraction(x,x_old);
+//		double[] xMeanOld_xMean = Utils.calculateVectorSubtraction(xMean_old, xMean);
+//		double[] result = Utils.addMatrixAndVector (x_xoldMatrix, xMeanOld_xMean);
+//		double[] s = Utils.scalerMultiply(result, -1*this.RHO*N);
+//		double s_norm= Utils.calculateNorm(s);
+//		double r_norm = Utils.calculateNorm(Utils.scaleVector(xMean, N));
+//		
+//		if(r_norm <= 0.1 && s_norm <= 0.1)
+//			return true;
+//		
+//		return false;
 	}
 	
 	private void sendFinishMessage(BSPPeer<NullWritable, NullWritable, IntWritable, Text, Text> peer) throws IOException
@@ -266,20 +330,31 @@ public class EVADMMBsp extends BSP<NullWritable, NullWritable, IntWritable, Text
 		peer.send(this.masterTask, new Text(Utils.networkSlaveToJson(object)));
 	}
 	
-	private double[] receiveSlaveOptimalValuesAndUpdateX(BSPPeer<NullWritable, NullWritable, IntWritable, Text, Text> peer) throws IOException
+	private Pair<double[],double[][]> receiveSlaveOptimalValuesAndUpdateX(BSPPeer<NullWritable, NullWritable, IntWritable, Text, Text> peer, int totalN) throws IOException
 	{
 		//List<MasterContext> list = new ArrayList<MasterContext>();
 		NetworkObjectSlave slave;
 		Text receivedJson;
+		
+		double[][] s = new double[this.masterContext.getXOptimal().length][totalN];
 		double[] averageXReceived = Utils.getZeroArray(this.masterContext.getXOptimal().length); 
-				
+		
+		int ev = 0;
+		
 		while ((receivedJson = peer.getCurrentMessage()) != null) //Receive initial array 
 		{
 			slave = Utils.jsonToNetworkSlave(receivedJson.toString());
-			averageXReceived =  Utils.vectorAdd(averageXReceived, slave.getXi()); 
+			averageXReceived =  Utils.vectorAdd(averageXReceived, slave.getXi());
+			
+			int i = 0;
+			for(double d: slave.getXiDifference()) {
+				s[i][ev] = d;
+				i++;
+			}
+			ev++;
 		}
 	
-		return averageXReceived;
+		return new Pair<double[],double[][]>(averageXReceived,s);
 	}
 	
 	private NetworkObjectMaster receiveMasterUAndXMean(BSPPeer<NullWritable, NullWritable, IntWritable, Text, Text> peer) throws IOException
@@ -316,6 +391,24 @@ public class EVADMMBsp extends BSP<NullWritable, NullWritable, IntWritable, Text
 		Iterations,
 		TotalFilesProcessedByEVs,
 		TotalXReceivedByMaster
+	}
+	
+	class Pair<T,U> {
+	    private final T m_first;
+	    private final U m_second;
+
+	    public Pair(T first, U second) {
+	        m_first = first;
+	        m_second = second;
+	    }
+
+	    public T first() {
+	        return m_first;
+	    }
+
+	    public U second() {
+	        return m_second;
+	    }
 	}
 }
 

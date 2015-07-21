@@ -212,4 +212,8 @@ public class MasterContext {
 	{
 		return this.xa_max;
 	}
+	
+	public void setRho(double value) {
+		this.rho = value;
+	}
 }

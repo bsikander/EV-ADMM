@@ -404,7 +404,8 @@ public class Utils {
 			result += (vec[i]*vec[i]);
 		}
 		
-		return Math.pow(result, 0.5);
+		return Math.sqrt(result);
+		//return Math.pow(result, 0.5);
 	}
 	
 	public static double[] scaleVector(double[] vec, int N)
