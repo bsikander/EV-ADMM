@@ -9,8 +9,10 @@ public class ResultMaster {
 	double[] x_master_optimal;
 	double costValue;
 	double[] evAverage;
+	double s_norm;
+	double r_norm;
 	
-	public ResultMaster(String peerName,int iteration, int ev_number, double[] u, double[] xMean, double[] x_optimal, double costvalue, double[] evAverageValue)
+	public ResultMaster(String peerName,int iteration, int ev_number, double[] u, double[] xMean, double[] x_optimal, double costvalue, double[] evAverageValue, double s_norm, double r_norm)
 	{
 		this.peerName = peerName;
 		this.iteration = iteration;
@@ -20,6 +22,8 @@ public class ResultMaster {
 		this.x_master_optimal = x_optimal;
 		this.costValue = costvalue;
 		this.evAverage = evAverageValue;
+		this.s_norm = s_norm;
+		this.r_norm = r_norm;
 	}
 	
 	public String printResult(int count)
@@ -43,12 +47,12 @@ public class ResultMaster {
 			sumu+=d;
 		
 		if(count>0) {
-			String print = "M:=> " + this.peerName + " \t " + this.iteration + " \t\t " + this.ev + " \t " + this.costValue + " \t " + x_evSum + " \t " + sum  + " \t " + sumxMean + " \t " + sumu + "\t" + this.x_master_optimal[0] + "\t" + this.xMean[0] + "\t" + this.u[0];
+			String print = "M:=> " + this.peerName + " \t " + this.iteration + " \t\t " + this.ev + " \t " + this.costValue + " \t " + x_evSum + " \t " + sum  + " \t " + sumxMean + " \t " + sumu + "\t" + this.x_master_optimal[0] + "\t" + this.xMean[0] + "\t" + this.u[0] + "\t s-norm: " + this.s_norm + "\t r_norm: " + this.r_norm;
 			System.out.println(print);
 			return print;
 		}
 		else {
-			String print = "M:=> " + this.peerName + " \t " + this.iteration + " \t\t " + this.ev + " \t " + this.costValue + " \t " + x_evSum + " \t " + sum  + " \t " + sumxMean + " \t " + sumu + "\t" + this.x_master_optimal[0] + "\t" + this.xMean[0] + "\t" + this.u[0];
+			String print = "M:=> " + this.peerName + " \t " + this.iteration + " \t\t " + this.ev + " \t " + this.costValue + " \t " + x_evSum + " \t " + sum  + " \t " + sumxMean + " \t " + sumu + "\t" + this.x_master_optimal[0] + "\t" + this.xMean[0] + "\t" + this.u[0] + "\t s-norm: " + this.s_norm + "\t r_norm: " + this.r_norm;
 			System.out.println(print);
 			return print;
 		}

@@ -58,8 +58,10 @@ public class SlaveContext {
 		//Utils.PrintArray(this.x);
 		//System.out.println("==============================");
 		
-		xOptimalDifference = new double[this.x.length]; //Initialize the difference array
+		//xOptimalDifference = new double[this.x.length]; //Initialize the difference array
 		x_optimal = new double[this.x.length];
+		
+		xOptimalDifference = slaveData.getXOptimal(); //Take the old value of optimal value from the mat file
 		
 		rho = rhoValue;
 		evFileName = fileName; 
@@ -157,7 +159,7 @@ public class SlaveContext {
 			//cplex.exportModel("EV_" + currentEVNo + ".lp");
 		
 		//Save the old value
-		double[] xOptimalOld = x_optimal;
+		//double[] xOptimalOld = x_optimal;
 		
 		cplex.solve();
 		
@@ -175,7 +177,7 @@ public class SlaveContext {
 		Utils.PrintArray(x_optimal);
 		
 		//Calculate x_i^k - x_i^k-1
-		xOptimalDifference = Utils.calculateVectorSubtraction(x_optimal, xOptimalOld);
+		xOptimalDifference = Utils.calculateVectorSubtraction(x_optimal, xOptimalDifference);
 		
 		//Write the x_optimal to mat file
 		Utils.SlaveXToMatFile(evFileName, x_optimal, conf);

@@ -27,6 +27,8 @@ public class EVADMMBsp extends BSP<NullWritable, NullWritable, IntWritable, Text
 	private static String AGGREGATOR_PATH;
 	private static String EV_PATH;
 	private static int EV_COUNT;
+	double s_norm;
+	double r_norm;
 	
 	
 	List<Result> resultList = new ArrayList<Result>();
@@ -89,7 +91,7 @@ public class EVADMMBsp extends BSP<NullWritable, NullWritable, IntWritable, Text
 					peer.sync();
 					//Receive message
 					//double[] s = new double[masterContext.getN()];
-					double[] oldXAverage = slaveAverageOptimalValue;
+					//double[] oldXAverage = slaveAverageOptimalValue;
 					Pair<double[], double[][]> result = receiveSlaveOptimalValuesAndUpdateX(peer, masterContext.getN());
 					//slaveAverageOptimalValue = receiveSlaveOptimalValuesAndUpdateX(peer, slaveAverageOptimalValue, masterContext.getN());
 					
@@ -100,7 +102,8 @@ public class EVADMMBsp extends BSP<NullWritable, NullWritable, IntWritable, Text
 //					Utils.PrintArray(slaveAverageOptimalValue);
 //					System.out.println("--------- AVERAGE AT MASTER ---------" );
 //					System.out.println(peer.getPeerName() + "Master 1.4:: Data sending complete. Doing Master optimiation");
-					
+					double[] masterXOptimalOld = masterContext.getXOptimal();
+					double[] oldXMean = masterContext.getxMean(); 
 					double costvalue = masterContext.optimize(masterContext.getXOptimal(),k);
 					
 					//Do convergence stuff.
@@ -120,25 +123,28 @@ public class EVADMMBsp extends BSP<NullWritable, NullWritable, IntWritable, Text
 					Utils.PrintArray(masterContext.getu());
 					System.out.println("---->U -END<----");
 					
-					resultMasterList.add(new ResultMaster(peer.getPeerName(),k,0,masterContext.getu(),masterContext.getxMean(),masterContext.getXOptimal(),costvalue,slaveAverageOptimalValue));
+					//resultMasterList.add(new ResultMaster(peer.getPeerName(),k,0,masterContext.getu(),masterContext.getxMean(),masterContext.getXOptimal(),costvalue,slaveAverageOptimalValue));
 					
 					
 					//TODO:Uncomment the convergence logic here
 					//Add the master optimal value int he matrix to check the convergence
-//					double[][] xDifferenceMatrix = result.second();
-//					int time = 0;
-//					for(double d: masterContext.getXOptimal()) {
-//						xDifferenceMatrix[time][xDifferenceMatrix[0].length - 1] = d; //Add the xoptimal value at the end
-//						time++;
-//					}
+					double[][] xDifferenceMatrix = result.second();
+					int time = 0;
+					double[] masterXOptimalDifference = Utils.calculateVectorSubtraction(masterContext.getXOptimal(), masterXOptimalOld);
+					
+					for(double d: masterXOptimalDifference) {
+						xDifferenceMatrix[time][xDifferenceMatrix[0].length - 1] = d; //Add the xoptimal value at the end
+						time++;
+					}
+					
+					boolean converged = checkConvergence(xDifferenceMatrix, masterContext.getxMean(), oldXMean, masterContext.getN(), masterContext.getu());
+					//checkConvergence(x, x_old, xMean, xMean_old, N)
+					if(converged == true) {
+						System.out.println("////////////Converged/////////");
+						break;
+					}
 //					
-//					boolean converged = checkConvergence(xDifferenceMatrix, result.first(), oldXAverage, masterContext.getN(), masterContext.getu());
-//					//checkConvergence(x, x_old, xMean, xMean_old, N)
-//					if(converged == true) {
-//						System.out.println("////////////Converged/////////");
-//						break;
-//					}
-//					
+					resultMasterList.add(new ResultMaster(peer.getPeerName(),k,0,masterContext.getu(),masterContext.getxMean(),masterContext.getXOptimal(),costvalue,slaveAverageOptimalValue, s_norm,r_norm));
 //					//Update rho is the code has not converged
 
 
@@ -262,14 +268,14 @@ public class EVADMMBsp extends BSP<NullWritable, NullWritable, IntWritable, Text
 	}
 	
 	private boolean checkConvergence(double[][] x, double[] xMean, double[] xMean_old, int N, double[] u)
-	{
-		//double[][] x_xoldMatrix = Utils.calculateMatrixSubtraction(x,x_old);
+	{	
+		//double[] xMeanOld_xMean = Utils.scaleVector(Utils.calculateVectorSubtraction(xMean_old, xMean), N);
 		double[] xMeanOld_xMean = Utils.calculateVectorSubtraction(xMean_old, xMean);
 		double[] result = Utils.addMatrixAndVector (x, xMeanOld_xMean);
 		double[] s = Utils.scalerMultiply(result, -1*this.RHO*N);
-		double s_norm= Utils.calculateNorm(s);
-		//double r_norm = Utils.calculateNorm(Utils.scaleVector(xMean, N));
-		double r_norm = Utils.calculateNorm(xMean);
+		s_norm= Utils.calculateNorm(s);
+		r_norm = Utils.calculateNorm(Utils.scaleVector(xMean, N));
+		//r_norm = Utils.calculateNorm(xMean);
 		
 		//eps_pri = sqrt(T*N);
 		double eps_pri = Math.sqrt(xMean.length * N);
@@ -282,17 +288,17 @@ public class EVADMMBsp extends BSP<NullWritable, NullWritable, IntWritable, Text
 		
 		//if r_norm > 10*s_norm
 		//	     rho=2*rho;
-	    // end
+	    // end	
 	    // if s_norm > 10*r_norm
 		//	     rho=rho/2;
 	    // end
 		
-		if(r_norm > 10* s_norm) {
-			EVADMMBsp.RHO = 2*EVADMMBsp.RHO;
-		}
-		else if(s_norm > 10*r_norm) {
-			EVADMMBsp.RHO = EVADMMBsp.RHO/2;
-		}
+//		if(r_norm > 10* s_norm) {
+//			EVADMMBsp.RHO = 2*EVADMMBsp.RHO;
+//		}
+//		else if(s_norm > 10*r_norm) {
+//			EVADMMBsp.RHO = EVADMMBsp.RHO/2;
+//		}
 		
 		masterContext.setRho(EVADMMBsp.RHO);
 		
