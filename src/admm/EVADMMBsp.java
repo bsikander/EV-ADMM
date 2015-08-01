@@ -132,7 +132,7 @@ public class EVADMMBsp extends BSP<NullWritable, NullWritable, IntWritable, Text
 					
 					
 					//TODO:Uncomment the convergence logic here
-					//Add the master optimal value int he matrix to check the convergence
+					//Add the master optimal value in the matrix to check the convergence
 					double[][] xDifferenceMatrix = result.second();
 					int time = 0;
 					double[] masterXOptimalDifference = Utils.calculateVectorSubtraction(masterContext.getXOptimal(), masterXOptimalOld);
@@ -150,9 +150,6 @@ public class EVADMMBsp extends BSP<NullWritable, NullWritable, IntWritable, Text
 					}
 					
 					resultMasterList.add(new ResultMaster(peer.getPeerName(),k,0,masterContext.getu(),masterContext.getxMean(),masterContext.getXOptimal(),costvalue,slaveAverageOptimalValue, s_norm,r_norm, totalcost));
-//					//Update rho is the code has not converged
-					totalcost = 0;
-
 
 				} catch (IloException e) {
 					// TODO Auto-generated catch block
@@ -238,10 +235,6 @@ public class EVADMMBsp extends BSP<NullWritable, NullWritable, IntWritable, Text
 					for(Result r : resultList){
 						printResult = r.printResult();
 						peer.write(new IntWritable(1), new Text(printResult));
-						
-						
-						
-						//LOG.info(printResult);
 					}
 					
 					System.out.println(peer.getPeerName() + "Slave 1.5: Sending the finishing message");
