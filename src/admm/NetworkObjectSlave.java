@@ -22,11 +22,15 @@ public class NetworkObjectSlave implements Writable{
 	@JsonProperty("x_i_difference")
 	private double[] x_i_difference;
 	
-	public NetworkObjectSlave(double[] x_i, int EVId, double[] x_i_difference)
+	@JsonProperty("cost")
+	private double cost;
+	
+	public NetworkObjectSlave(double[] x_i, int EVId, double[] x_i_difference, double cost)
 	{
 		this.x_i = x_i;
 		this.EVId = EVId;
 		this.x_i_difference = x_i_difference;
+		this.cost = cost;
 	}
 
 	public void setNetworkObjectSlave(NetworkObjectSlave n)
@@ -34,6 +38,7 @@ public class NetworkObjectSlave implements Writable{
 		this.x_i = n.x_i;
 		this.EVId = n.EVId;
 		this.x_i_difference = n.x_i_difference;
+		this.cost = n.cost;
 	}
 	
 	public NetworkObjectSlave()
@@ -64,6 +69,12 @@ public class NetworkObjectSlave implements Writable{
 	public int getEVId()
 	{
 		return this.EVId;
+	}
+	
+	@JsonProperty("cost")
+	public double getCost()
+	{
+		return this.cost;
 	}
 	
 	@JsonProperty("x_i_difference")

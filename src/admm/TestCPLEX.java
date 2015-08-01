@@ -10,14 +10,18 @@ import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hama.bsp.BSPPeer;
+import org.codehaus.jackson.map.ObjectMapper;
+import org.codehaus.jackson.type.TypeReference;
 
 import com.jmatio.io.MatFileReader;
 import com.jmatio.io.MatFileWriter;
@@ -29,10 +33,31 @@ import ilog.cplex.*;
 public class TestCPLEX {
 public static void main(String[] args) throws IloException, IOException {
 	//parseTxtFileToGenerateMatFiles();
-	writeMasterFile();
-	writeSlaveFile();
-	writeDummyFile();
+//	writeMasterFile();
+//	writeSlaveFile();
+//	writeDummyFile();
+	
+	Map<String, double[]> data = new HashMap<String, double[]>();
+	data.put("test", new double[] {1,2,3});
+	data.put("test1", new double[] {4,5,6});
+	
+	final ObjectMapper OBJECT_MAPPER = new ObjectMapper();	
+	String value = OBJECT_MAPPER.writeValueAsString(data);
+	
+	System.out.println("String: > " + value);
+	
+	
+	 //Map<String, double[]> data1 = OBJECT_MAPPER.readValue(value, data.getClass());
+	Map<String, double[]> data1 = OBJECT_MAPPER.readValue(value, new TypeReference<Map<String, double[]>>(){});
+	 //ArrayList<Double> d = (java.util.ArrayList<Double>)data1.get("test1");
+	 Utils.PrintArray(data1.get("test1"));
+	 
+	 double[] dd = data1.get("test1");
+	 Utils.PrintArray(dd);
+	 //System.out.println("Data :> " + data.get("test"));
 }
+
+
 
 private static void writeDummyFile() throws FileNotFoundException, UnsupportedEncodingException {
 	String data = "";
