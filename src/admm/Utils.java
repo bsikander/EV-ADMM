@@ -36,9 +36,7 @@ public class Utils {
 		{
 			File tempMatFile = getFileFromHDFS(conf, filePath);
 			MatFileReader matfilereader = new MatFileReader(tempMatFile);
-			//MatFileWriter writer = new MatFileWriter();
-			 
-			//MatFileReader matfilereader = new MatFileReader(filePath);
+			
 			double[][] reArray = ((MLDouble)matfilereader.getMLArray("re")).getArray(); //Conversion
 			double[][] DArray = ((MLDouble)matfilereader.getMLArray("D")).getArray(); //Conversion
 			double[][] priceArray = ((MLDouble)matfilereader.getMLArray("price")).getArray();
@@ -61,7 +59,6 @@ public class Utils {
 	private static FileSystem getFSObject(Configuration conf) throws IOException, URISyntaxException
 	{
 		FileSystem fs = FileSystem.get(conf);
-		//FileSystem fs = FileSystem.get(new URI("hdfs://172.17.0.5:54310/"), conf);
 		return fs;
 	}
 	
@@ -76,22 +73,11 @@ public class Utils {
 	public static SlaveData LoadSlaveDataFromMatFile(String filePath, boolean isFirstIteration, BSPPeer<NullWritable, NullWritable,IntWritable, Text, Text> peer) throws IOException
 	{
 		try
-		{//			//System.out.println(conf..toString());
-//			FileSystem fs = FileSystem.get(new URI("hdfs://localhost:54310/"), peer.getConfiguration());
-//			String fileSystemPath = fs.getWorkingDirectory().toString() + "/test/1.mat";
-//			fs.get
-//			System.out.println(workingPath.toString());
-//			fs.printStatistics();
-//			FileStatus test = fs.getFileStatus(new Path("test/1.mat"));
-//			System.out.println(test.getPath().toString());
-//			//fs.get(new URI("hdfs://localhost:54310/user/raja/test/1.mat"), conf);
-			
+		{	
 			File tempMatFile = getFileFromHDFS(peer.getConfiguration(), filePath);
 	
 			peer.write(new IntWritable(1), new Text("Inside LOAD SLAVE DATA FROM MAT FILE"));
 			MatFileReader matfilereader = new MatFileReader(tempMatFile);
-			
-			//MatFileReader matfilereader = new MatFileReader(filePath);
 			
 			double[][] dArray = ((MLDouble)matfilereader.getMLArray("d")).getArray();
 			double[][] AArray = ((MLDouble)matfilereader.getMLArray("A")).getArray();
@@ -111,7 +97,7 @@ public class Utils {
 				x_optimal = ((MLDouble)matfilereader.getMLArray("x_optimal")).getArray(); //Conversion
 				
 				peer.write(new IntWritable(1), new Text("X_OPTIMAL FOUND"));
-				Utils.PrintArray(getSingleArrayFromDouble(x_optimal));
+				//Utils.PrintArray(getSingleArrayFromDouble(x_optimal));
 			}
 			
 			peer.write(new IntWritable(1), new Text(Utils.convertDoubleArrayToString(getSingleArrayFromDouble(x_optimal))));
@@ -141,7 +127,6 @@ public class Utils {
 		try
 		{
 			MatFileWriter matfileWriter = new MatFileWriter();
-			//MatFileReader matfileReader = new MatFileReader(filePath);
 			File tempMatFile = getFileFromHDFS(conf, filePath);
 			MatFileReader matfileReader = new MatFileReader(tempMatFile);
 			
@@ -160,7 +145,7 @@ public class Utils {
 			
 			MLArray xMLArray = new MLDouble("x_optimal",xDoubleArray);
 			list.add(xMLArray);
-			//matfileWriter.write(filePath, list);
+			
 			
 			final File tempFile = File.createTempFile("saveTemp", ".tmp"); //Create a temp file
 			tempFile.deleteOnExit();
@@ -305,8 +290,6 @@ public class Utils {
 		
 		for(int i =0; i< xMasterOptimal.length; i++)
 			average[i] = round(average[i]/(double)evCount);
-		//average[i] = round(average[i]/(double)xMasterOptimal.length , ROUND_PLACES);
-		
 		return average;
 	}
 	
@@ -405,7 +388,6 @@ public class Utils {
 		}
 		
 		return Math.sqrt(result);
-		//return Math.pow(result, 0.5);
 	}
 	
 	public static double[] scaleVector(double[] vec, int N)

@@ -24,29 +24,6 @@ public class Main {
 		HamaConfiguration conf = new HamaConfiguration();
 		BSPJob job = new BSPJob(conf, Main.class);
 		
-//		//TESTING HDFS ACCESS DIRECTLY FROM CODE - IT WORKS
-//		
-		//System.out.println(conf..toString());
-//		FileSystem fs = FileSystem.get(new URI("hdfs://localhost:54310/"), conf);
-//		Path workingPath = fs.getWorkingDirectory();
-//		System.out.println(workingPath.toString());
-//		fs.printStatistics();
-//		fs.copyToLocalFile(new Path("test/1.mat"), new Path("/Users/raja/Desktop/"));
-//		File.
-//		fs.create(new Path("test/1.mat"), true);
-//		fs.delete(new Path("test/2.mat"));
-//		FSDataOutputStream dos = fs.create(new Path("/test/1.mat"));
-//		
-//		OutputStream outputStream = dos;
-		//File f = new File(new URI("hdfs://localhost:54310/test/1.mat"));
-		
-		
-//		FileStatus test = fs.getFileStatus(new Path("test/1.mat"));
-//		System.out.println(test.getPath().toString());
-		//fs.get(new URI("hdfs://localhost:54310/user/raja/test/1.mat"), conf);
-//		
-//		//TESTING HDFS ACCESS DIRECTLY FROM CODE - IT WORKS - END
-		
 		if(args.length < 3) {
 			printUsage();
 		}
@@ -59,7 +36,7 @@ public class Main {
 		job.setJarByClass(EVADMMBsp.class);
 		job.setJobName("EVADMM");
 	
-		job.set(Constants.EVADMM_MAX_ITERATIONS, "10");
+		job.set(Constants.EVADMM_MAX_ITERATIONS, "4");
 		job.set(Constants.EVADMM_EV_COUNT, "4");
 		job.set(Constants.EVADMM_OUTPUT_PATH, "/Users/raja/Documents/workspace/Hama-EVADMM/output/");
 		job.set(Constants.EVADMM_AGGREGATOR_PATH, "/Users/raja/Documents/Thesis/ADMM_matlab/Aggregator/aggregator.mat");
@@ -85,7 +62,6 @@ public class Main {
 		job.setNumBspTask (Integer.parseInt(job.get(Constants.EVADMM_BSP_TASK)) );
 		BSPJobClient jobClient = new BSPJobClient(conf);
 		ClusterStatus cluster = jobClient.getClusterStatus(true);
-//		job.setNumBspTask(cluster.getMaxTasks());
 		System.out.println("Max bsp task:" + cluster.getMaxTasks());
 		job.setInputFormat(NullInputFormat.class);
 		job.setOutputPath(new Path(job.get(Constants.EVADMM_OUTPUT_PATH)));
