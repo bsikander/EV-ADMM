@@ -30,35 +30,28 @@ public class EVADMMBsp extends BSP<NullWritable, NullWritable, IntWritable, Text
 	double s_norm;
 	double r_norm;
 	
-	
 	List<Result> resultList = new ArrayList<Result>();
 	List<ResultMaster> resultMasterList = new ArrayList<ResultMaster>();
 	
 	@Override
 	public void bsp(BSPPeer<NullWritable, NullWritable,IntWritable, Text, Text> peer) throws IOException, SyncException, InterruptedException {
-		int k = 0; //iteration counter
+		int k = 0;
 		
 		if(peer.getPeerName().equals(this.masterTask)) //The master task
 		{	
-			//Calculate rnorm, snorm
-			//Calculate eps_pri and eps_dual
-			//Check convergence
-			//Update rho value
 			masterContext = new MasterContext(AGGREGATOR_PATH,EV_COUNT,RHO, peer.getConfiguration());
 			
-			while(k != DEFAULT_ADMM_ITERATIONS_MAX) //TODO: Or convergence is met
+			while(k != DEFAULT_ADMM_ITERATIONS_MAX)
 			{	
 				double[] slaveAverageOptimalValue = new double[masterContext.getT()]; //Moved up here to retain the value of old average of all the xoptimal
 				
 				try {
-					//Optimize + return the cost + save the optimal X* in the x matrix last column
 					int currentEV = 0;
 					
 					//Create a list of network object but only upto total peers -1 (excluding master)
 					//Set the u and xMean for each object
 					//For each peer, populate the EVs that it has to process
 					//In the end, send only one object per machine
-					
 					List<NetworkObjectMaster> listOfNetworkMasterObjects = new ArrayList<NetworkObjectMaster>();
 					for(int i=0; i < peer.getNumPeers() -1; i++) {
 						listOfNetworkMasterObjects.add(new NetworkObjectMaster(masterContext.getu(), masterContext.getxMean(), new ArrayList<Integer>()));
@@ -77,7 +70,6 @@ public class EVADMMBsp extends BSP<NullWritable, NullWritable, IntWritable, Text
 					}
 					
 					peer.sync(); //Send messages which are equal to peer.getNumPeers - 1 
-					
 					peer.sync();
 					
 					Pair<double[], double[][], Double> result = receiveSlaveOptimalValuesAndUpdateX(peer, masterContext.getN());
@@ -94,21 +86,21 @@ public class EVADMMBsp extends BSP<NullWritable, NullWritable, IntWritable, Text
 
 					//TODO:Uncomment the convergence logic here
 					//Add the master optimal value in the matrix to check the convergence
-//					double[][] xDifferenceMatrix = result.second();
-//					int time = 0;
-//					double[] masterXOptimalDifference = Utils.calculateVectorSubtraction(masterContext.getXOptimal(), masterXOptimalOld);
-//					
-//					for(double d: masterXOptimalDifference) {
-//						xDifferenceMatrix[time][xDifferenceMatrix[0].length - 1] = d; //Add the xoptimal value at the end
-//						time++;
-//					}
-//					
-//					boolean converged = checkConvergence(xDifferenceMatrix, masterContext.getxMean(), oldXMean, masterContext.getN(), masterContext.getu());
-//					
-//					if(converged == true) {
-//						System.out.println("////////////Converged/////////");
-//						break;
-//					}
+					double[][] xDifferenceMatrix = result.second();
+					int time = 0;
+					double[] masterXOptimalDifference = Utils.calculateVectorSubtraction(masterContext.getXOptimal(), masterXOptimalOld);
+					
+					for(double d: masterXOptimalDifference) {
+						xDifferenceMatrix[time][xDifferenceMatrix[0].length - 1] = d; //Add the xoptimal value at the end
+						time++;
+					}
+					
+					boolean converged = checkConvergence(xDifferenceMatrix, masterContext.getxMean(), oldXMean, masterContext.getN(), masterContext.getu());
+					
+					if(converged == true) {
+						System.out.println("////////////Converged/////////");
+						break;
+					}
 					
 					resultMasterList.add(new ResultMaster(peer.getPeerName(),k,0,masterContext.getu(),masterContext.getxMean(),masterContext.getXOptimal(),costvalue,slaveAverageOptimalValue, s_norm,r_norm, totalcost));
 
@@ -185,7 +177,6 @@ public class EVADMMBsp extends BSP<NullWritable, NullWritable, IntWritable, Text
 					break;
 				}
 			}
-			
 		}
 	}
 	
@@ -198,13 +189,7 @@ public class EVADMMBsp extends BSP<NullWritable, NullWritable, IntWritable, Text
 	
 	@Override
     public void setup(BSPPeer<NullWritable, NullWritable, IntWritable, Text, Text> peer) throws IOException, SyncException, InterruptedException {
-		// Choose one as a master
-		//System.out.println(peer.getPeerName() + " -- Selecting Master -> Selected Master = " + peer.getPeerName(0) + "  --Total peers: " + peer.getNumPeers());
 		this.masterTask = peer.getPeerName(0); //0 is our master
-		
-//		for(String peerName: peer.getAllPeerNames()) {
-//			System.out.println(peerName);
-//		}
 		
 		AGGREGATOR_PATH = peer.getConfiguration().get(Constants.EVADMM_AGGREGATOR_PATH);
 		EV_PATH = peer.getConfiguration().get(Constants.EVADMM_EV_PATH);
@@ -222,8 +207,6 @@ public class EVADMMBsp extends BSP<NullWritable, NullWritable, IntWritable, Text
 		r_norm = Utils.calculateNorm(Utils.scaleVector(xMean, N));
 		
 		double eps_pri = Math.sqrt(xMean.length * N);
-		
-		
 		double eps_dual = (eps_pri * 0.0001) + (0.0001 * Utils.calculateNorm(Utils.scalerMultiply(u, EVADMMBsp.RHO)));
 		
 		if(r_norm <= eps_pri && s_norm <= eps_dual)
