@@ -33,27 +33,28 @@ import ilog.cplex.*;
 public class TestCPLEX {
 public static void main(String[] args) throws IloException, IOException {
 	//parseTxtFileToGenerateMatFiles();
-//	writeMasterFile();
-//	writeSlaveFile();
+	//writeMasterFile();
+	writeSlaveFile();
+	System.out.println("Done");
 //	writeDummyFile();
 	
-	Map<String, double[]> data = new HashMap<String, double[]>();
-	data.put("test", new double[] {1,2,3});
-	data.put("test1", new double[] {4,5,6});
-	
-	final ObjectMapper OBJECT_MAPPER = new ObjectMapper();	
-	String value = OBJECT_MAPPER.writeValueAsString(data);
-	
-	System.out.println("String: > " + value);
-	
-	
-	 //Map<String, double[]> data1 = OBJECT_MAPPER.readValue(value, data.getClass());
-	Map<String, double[]> data1 = OBJECT_MAPPER.readValue(value, new TypeReference<Map<String, double[]>>(){});
-	 //ArrayList<Double> d = (java.util.ArrayList<Double>)data1.get("test1");
-	 Utils.PrintArray(data1.get("test1"));
-	 
-	 double[] dd = data1.get("test1");
-	 Utils.PrintArray(dd);
+//	Map<String, double[]> data = new HashMap<String, double[]>();
+//	data.put("test", new double[] {1,2,3});
+//	data.put("test1", new double[] {4,5,6});
+//	
+//	final ObjectMapper OBJECT_MAPPER = new ObjectMapper();	
+//	String value = OBJECT_MAPPER.writeValueAsString(data);
+//	
+//	System.out.println("String: > " + value);
+//	
+//	
+//	 //Map<String, double[]> data1 = OBJECT_MAPPER.readValue(value, data.getClass());
+//	Map<String, double[]> data1 = OBJECT_MAPPER.readValue(value, new TypeReference<Map<String, double[]>>(){});
+//	 //ArrayList<Double> d = (java.util.ArrayList<Double>)data1.get("test1");
+//	 Utils.PrintArray(data1.get("test1"));
+//	 
+//	 double[] dd = data1.get("test1");
+//	 Utils.PrintArray(dd);
 	 //System.out.println("Data :> " + data.get("test"));
 }
 
@@ -69,7 +70,7 @@ private static void writeDummyFile() throws FileNotFoundException, UnsupportedEn
 private static void writeSlaveFile() throws IOException {
 	SlaveData sdata;
 	String data = "";
-	
+	//xi_max,xi_min,A,R_value,gamma,alpha,rho,smax,smin,B
 	for(int i =1; i <= 10; i++) {
 		 sdata = LoadSlaveDataFromMatFile("/Users/raja/Documents/ADMM_matlab/EVs/home/" + i + ".mat");
 		 
@@ -83,7 +84,7 @@ private static void writeSlaveFile() throws IOException {
 			 //Utils.scalerMultiply(sdata.getD(), -4);
 			 ccc++;
 		 }
-		 data += "[";
+		 data += "96|[";
 		 data += x_max.substring(0,x_max.length() - 1);
 		 data += "]|[";
 		 data += x_min.substring(0,x_min.length() - 1);
@@ -137,29 +138,32 @@ private static void writeSlaveFile() throws IOException {
 private static void writeMasterFile() throws FileNotFoundException, UnsupportedEncodingException
 {
 MasterData mData = LoadMasterDataFromMatFile("/Users/raja/Documents/ADMM_matlab/Aggregator/aggregator.mat");
-	
-	String data = "[";
+	//"timeSlot,price,rho"
+	String data = "96|[";
 	
 	for(double d : mData.getPrice()) {
 		data += String.valueOf(d) + ",";
 	}
 	data = data.substring(0,data.length() - 1);
-	data += "]|[";
-	
-	for(double d : mData.getRe()) {
-		data += String.valueOf(d) + ",";
-	}
-	
-	data = data.substring(0,data.length() - 1);
-	data += "]|[";
-	
-	for(double d : mData.getD()) {
-		data += String.valueOf(d) + ",";
-	}
-	
-	data = data.substring(0,data.length() - 1);
 	data += "]";
+	//data += "]|[";
 	
+//	for(double d : mData.getRe()) {
+//		data += String.valueOf(d) + ",";
+//	}
+//	
+//	data = data.substring(0,data.length() - 1);
+//	data += "]|[";
+//	
+//	for(double d : mData.getD()) {
+//		data += String.valueOf(d) + ",";
+//	}
+//	
+//	data = data.substring(0,data.length() - 1);
+//	data += "]";
+
+	
+	//NOT INCLUDED IN UNCOMMENT
 //	double[] m = Utils.getArrayWithData(96,1);
 //	m = Utils.scalerMultiply(m, -100e3);
 //	
@@ -177,11 +181,13 @@ MasterData mData = LoadMasterDataFromMatFile("/Users/raja/Documents/ADMM_matlab/
 //	}
 //	data = data.substring(0,data.length() - 1);
 //	data += "]";
-	
-	data += "|[-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0]";
-	data += "|[60.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0]";
+	//NOT INCLUDED IN UNCOMMENT - END
+//	data += "|[-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0,-100000.0]";
+//	data += "|[60.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0]";
 	data += "|0.01";
 	writeFile(data, "aggregator.txt");
+	
+	System.out.println("Finished");
 }
 
 private static void writeFile(String data, String fileName) throws FileNotFoundException, UnsupportedEncodingException {

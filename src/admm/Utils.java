@@ -21,6 +21,7 @@ import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hama.bsp.BSPPeer;
 import org.codehaus.jackson.map.ObjectMapper;
+import org.mortbay.log.Log;
 
 import com.google.common.io.ByteStreams;
 import com.jmatio.io.MatFileReader;
@@ -32,9 +33,11 @@ public class Utils {
 	
 	public static MasterData LoadMasterDataFromMatFile(String filePath, Configuration conf)
 	{
+		File tempMatFile = null;
 		try
 		{
-			File tempMatFile = getFileFromHDFS(conf, filePath);
+			//File tempMatFile = getFileFromHDFS(conf, filePath);
+			tempMatFile = getFileFromHDFS(conf, filePath);
 			MatFileReader matfilereader = new MatFileReader(tempMatFile);
 			
 			double[][] reArray = ((MLDouble)matfilereader.getMLArray("re")).getArray(); //Conversion
@@ -54,6 +57,11 @@ public class Utils {
 			System.out.println("Exception in LoadMasterData function in Utils" + e.getMessage() + " == filePath: " + filePath);
 			return null;
 		}
+		finally {
+			if(tempMatFile != null) {
+				tempMatFile.delete();
+			}
+		}
 	}
 	
 	private static FileSystem getFSObject(Configuration conf) throws IOException, URISyntaxException
@@ -67,16 +75,22 @@ public class Utils {
 		FSDataInputStream in = fs.open(new Path(filePath));
 		File tempMatFile = stream2file(in, filePath.split("/")[filePath.split("/").length - 1]);
 		
+		//fs.close(); //Added on 27th August
+		in.close();
+		
 		return tempMatFile;
 	}
 	
 	public static SlaveData LoadSlaveDataFromMatFile(String filePath, boolean isFirstIteration, BSPPeer<NullWritable, NullWritable,IntWritable, Text, Text> peer) throws IOException
 	{
+		File tempMatFile = null;
 		try
 		{	
-			File tempMatFile = getFileFromHDFS(peer.getConfiguration(), filePath);
+			//System.out.println("FILE PATH: ->" + filePath);
+			//File tempMatFile = getFileFromHDFS(peer.getConfiguration(), filePath);
+			tempMatFile = getFileFromHDFS(peer.getConfiguration(), filePath);
 	
-			peer.write(new IntWritable(1), new Text("Inside LOAD SLAVE DATA FROM MAT FILE"));
+			//peer.write(new IntWritable(1), new Text("Inside LOAD SLAVE DATA FROM MAT FILE"));
 			MatFileReader matfilereader = new MatFileReader(tempMatFile);
 			
 			double[][] dArray = ((MLDouble)matfilereader.getMLArray("d")).getArray();
@@ -116,18 +130,25 @@ public class Utils {
 		}
 		catch(Exception e)
 		{
-			System.out.println("Exception in LoadSlaveDataFromMatFile function in Utils" + e.getMessage());
+			System.out.println("Exception in LoadSlaveDataFromMatFile function in Utils -> FILE: " + filePath + " -- EXCEPTION->" + e.getMessage());
 			peer.write(new IntWritable(1), new Text(e.getMessage()));
 			return null;
+		}
+		finally {
+			if(tempMatFile != null) {
+				tempMatFile.delete();
+			}
 		}
 	}
 	
 	public static void SlaveXToMatFile(String filePath, double[] x, Configuration conf)
 	{
+		File tempMatFile = null;
 		try
 		{
 			MatFileWriter matfileWriter = new MatFileWriter();
-			File tempMatFile = getFileFromHDFS(conf, filePath);
+			//File tempMatFile = getFileFromHDFS(conf, filePath);
+			tempMatFile = getFileFromHDFS(conf, filePath);
 			MatFileReader matfileReader = new MatFileReader(tempMatFile);
 			
 			List<MLArray> list = new ArrayList<MLArray>();
@@ -155,10 +176,16 @@ public class Utils {
 			
 			FileSystem fs = getFSObject(conf);
 			fs.copyFromLocalFile(new Path(tempPath), new Path(filePath)); //Copy the temp file to HDFS
+			
 		}
 		catch(Exception e)
 		{
-			System.out.println("Exception in LoadSlaveDataFromMatFile function in Utils" + e.getMessage());
+			System.out.println("Exception in SlaveXToMatFile function in Utils -> FilePath -> " + filePath + " Exception" + e.getMessage());
+		}
+		finally {
+			if(tempMatFile != null) {
+				tempMatFile.delete();
+			}
 		}
 	}
 	
@@ -168,6 +195,9 @@ public class Utils {
         try (FileOutputStream out = new FileOutputStream(tempFile)) {
             //IOUtils.copy(in, out);
         	ByteStreams.copy(in, out);
+        }
+        catch(Exception e) {
+        	System.out.println("EXCEPTION stream2file -> " + e.getMessage());
         }
         return tempFile;
     }

@@ -86,28 +86,29 @@ public class EVADMMBsp extends BSP<NullWritable, NullWritable, IntWritable, Text
 
 					//TODO:Uncomment the convergence logic here
 					//Add the master optimal value in the matrix to check the convergence
-					double[][] xDifferenceMatrix = result.second();
-					int time = 0;
-					double[] masterXOptimalDifference = Utils.calculateVectorSubtraction(masterContext.getXOptimal(), masterXOptimalOld);
+//					double[][] xDifferenceMatrix = result.second();
+//					int time = 0;
+//					double[] masterXOptimalDifference = Utils.calculateVectorSubtraction(masterContext.getXOptimal(), masterXOptimalOld);
+//					
+//					for(double d: masterXOptimalDifference) {
+//						xDifferenceMatrix[time][xDifferenceMatrix[0].length - 1] = d; //Add the xoptimal value at the end
+//						time++;
+//					}
+//					
+//					boolean converged = checkConvergence(xDifferenceMatrix, masterContext.getxMean(), oldXMean, masterContext.getN(), masterContext.getu());
+//					
+//					if(converged == true) {
+//						System.out.println("////////////Converged/////////");
+//						break;
+//					}
 					
-					for(double d: masterXOptimalDifference) {
-						xDifferenceMatrix[time][xDifferenceMatrix[0].length - 1] = d; //Add the xoptimal value at the end
-						time++;
-					}
-					
-					boolean converged = checkConvergence(xDifferenceMatrix, masterContext.getxMean(), oldXMean, masterContext.getN(), masterContext.getu());
-					
-					if(converged == true) {
-						System.out.println("////////////Converged/////////");
-						break;
-					}
-					
-					resultMasterList.add(new ResultMaster(peer.getPeerName(),k,0,masterContext.getu(),masterContext.getxMean(),masterContext.getXOptimal(),costvalue,slaveAverageOptimalValue, s_norm,r_norm, totalcost));
+					//resultMasterList.add(new ResultMaster(peer.getPeerName(),k,0,masterContext.getu(),masterContext.getxMean(),masterContext.getXOptimal(),costvalue,slaveAverageOptimalValue, s_norm,r_norm, totalcost));
 
 				} catch (IloException e) {
 					// TODO Auto-generated catch block
 					e.printStackTrace();
 					System.out.println(peer.getPeerName() + "Master 1.7 :: " + e.getMessage());
+					peer.write(new IntWritable(1), new Text(peer.getPeerName() + "Master 1.7 :: " + e.getMessage()));
 				}
 				
 				k++;
@@ -118,15 +119,17 @@ public class EVADMMBsp extends BSP<NullWritable, NullWritable, IntWritable, Text
 			peer.sync();
 			peer.sync();
 			
-			System.out.println("\\\\\\\\MASTER OUTPUT\\\\\\\\");
-			int count=0;
-			String printResult = "";
-			for(ResultMaster r : resultMasterList){
-				 printResult = r.printResult(count);
-				 peer.write(new IntWritable(1), new Text(printResult));
-				count++;
-			}
-			System.out.println("\\\\\\\\MASTER OUTPUT - END\\\\\\\\");
+			//System.out.println("\\\\\\\\MASTER OUTPUT\\\\\\\\");
+//			peer.write(new IntWritable(1), new Text("~~~~~~~MASTER OUTPUT~~~~~~~"));
+//			int count=0;
+//			String printResult = "";
+//			for(ResultMaster r : resultMasterList){
+//				 printResult = r.printResult(count);
+//				 peer.write(new IntWritable(1), new Text(printResult));
+//				count++;
+//			}
+//			//System.out.println("\\\\\\\\MASTER OUTPUT - END\\\\\\\\");
+//			peer.write(new IntWritable(1), new Text("~~~~~~~~MASTER OUTPTU- END ~~~~~~~"));
 			
 		}
 		else //master task else
@@ -155,7 +158,7 @@ public class EVADMMBsp extends BSP<NullWritable, NullWritable, IntWritable, Text
 						//Do optimization and write the x_optimal to mat file
 						double cost = slaveContext.optimize();
 					
-						resultList.add(new Result(peer.getPeerName(),k,evId, slaveContext.getX(),masterData.getxMean(),masterData.getU(),slaveContext.getXOptimalSlave(),cost));
+						//resultList.add(new Result(peer.getPeerName(),k,evId, slaveContext.getX(),masterData.getxMean(),masterData.getU(),slaveContext.getXOptimalSlave(),cost));
 						
 						NetworkObjectSlave slave = new NetworkObjectSlave(slaveContext.getXOptimalSlave(), slaveContext.getCurrentEVNo(), slaveContext.getXOptimalDifference(), cost);
 						sendXOptimalToMaster(peer, slave);
@@ -169,11 +172,11 @@ public class EVADMMBsp extends BSP<NullWritable, NullWritable, IntWritable, Text
 				
 				peer.sync(); //Send all the data
 				if(finish == true) {
-					String printResult = "";
-					for(Result r : resultList){
-						printResult = r.printResult();
-						peer.write(new IntWritable(1), new Text(printResult));
-					}
+//					String printResult = "";
+//					for(Result r : resultList){
+//						//printResult = r.printResult();
+//						//peer.write(new IntWritable(1), new Text(printResult));
+//					}
 					break;
 				}
 			}
@@ -221,7 +224,7 @@ public class EVADMMBsp extends BSP<NullWritable, NullWritable, IntWritable, Text
 		
 		masterContext.setRho(EVADMMBsp.RHO);
 		
-		System.out.println("CONVERGED VALUES ////////// s_norm: " + s_norm + " -- r_norm: " + r_norm + " --eps_dual: " + eps_dual + " -- eps_pri" + eps_pri);
+		//System.out.println("CONVERGED VALUES ////////// s_norm: " + s_norm + " -- r_norm: " + r_norm + " --eps_dual: " + eps_dual + " -- eps_pri" + eps_pri);
 		return false;
 	}
 	
