@@ -35,9 +35,9 @@
 	<classpathentry kind="lib" path="/Users/raja/Documents/c_libiraries/JMatIO_071005/lib/jamtio.jar"/>
 	<classpathentry kind="lib" path="/Users/raja/Documents/c_libiraries/Apache-Common-Math/commons-math3-3.5/commons-math3-3.5.jar"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
-	<classpathentry kind="lib" path="/Users/raja/Documents/c_libiraries/cplex.jar">
+	<classpathentry kind="lib" path="/Users/raja/Applications/IBM/ILOG/CPLEX_Studio_Community1262/cplex/lib/cplex.jar">
 		<attributes>
-			<attribute name="org.eclipse.jdt.launching.CLASSPATH_ATTR_LIBRARY_PATH_ENTRY" value="/Users/raja/Documents/c_libiraries/cplex"/>
+			<attribute name="org.eclipse.jdt.launching.CLASSPATH_ATTR_LIBRARY_PATH_ENTRY" value="/Users/raja/Applications/IBM/ILOG/CPLEX_Studio_Community1262/cplex/bin/x86-64_osx"/>
 		</attributes>
 	</classpathentry>
 	<classpathentry kind="output" path="bin"/>

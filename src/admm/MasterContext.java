@@ -53,43 +53,15 @@ public class MasterContext {
 		this.xa_min = m;
 		this.xa_max = m_max;
 		
-//		System.out.println("----PRINTING XA_MIN ");
-//		
-//		String data = "";
-//		data += "[";
-//		for(double d: xa_min){ 
-//			data += (d + ",");
-//		}
-//		data = data.substring(0,data.length() - 1);
-//		data+= "]";
-//		
-//		System.out.println(data);
-//		
-//		data = "";
-//		data += "[";
-//		for(double d: xa_max){ 
-//			data += (d + ",");
-//		}
-//		data = data.substring(0,data.length() - 1);
-//		data+= "]";
-//		System.out.println(data);
-//		//Utils.PrintArray(xa_min);
-//		
-//		System.out.println("---- PRINTING XA_MAX");
-//		Utils.PrintArray(xa_max);
-		
 		xMean = Utils.getArrayWithData(getT(),0);
 	}
 	
 	public double optimize(double[] xold,int iteration) throws IloException, FileNotFoundException
-	{		
-		//Object src = new IloOplModelSource();
-		
+	{	
 		IloCplex cplex = new IloCplex();
 		OutputStream out = new FileOutputStream("logfile_master");
 		cplex.setOut(out);
 		
-		//IloNumVar[] x_n = cplex.numVarArray(masterData.getPrice().length, Double.MIN_VALUE, Double.MAX_VALUE);
 		IloNumVar[] x_n = cplex.numVarArray(masterData.getPrice().length, -60, 100000);
 		
 		double[] priceRealMatrix = masterData.getPrice();
@@ -107,23 +79,15 @@ public class MasterContext {
 		
 		IloNumExpr rightSide = cplex.sum(exps);
 		cplex.addMinimize(rightSide);
-				
-		//cplex.exportModel("TestModel_beh" + iteration +".lp");
-
-		cplex.solve();
-		System.out.println("MASTER:: Optimal Value: " + cplex.getObjValue());
+		cplex.solve();		
+		//cplex.exportModel("TestModel_beh" + iteration +".lp");		
 		
 		x_optimal = new double[x_n.length];
 		
-		System.out.println("======= MASTER: OPTIMZATION ARRAY =====");
 		for(int u=0; u< x_n.length; u++)
 		{
 			x_optimal[u] = cplex.getValues(x_n)[u];
-			System.out.print(Utils.round(cplex.getValues(x_n)[u]) + "\t");
 		}
-		
-		System.out.println("=====");
-		
 		this.setXOptimal(x_optimal);
 		
 		return cplex.getObjValue();
@@ -131,21 +95,10 @@ public class MasterContext {
 	
 	private double[] subtractOldMeanU(double[] xold)
 	{	
-		System.out.println("XOLD");
-		Utils.PrintArray(xold);
-		
-		System.out.println("XOLD * -1");
 		xold = Utils.scalerMultiply(xold, -1);
-		Utils.PrintArray(xold);
-		
-		System.out.println("XOLD + xMEAN");
 		double[] temp = Utils.vectorAdd(xold, this.xMean);
-		Utils.PrintArray(temp);
-		
-		System.out.println("TEMP + U");
-		
 		double[] output = Utils.vectorAdd(temp, this.u);
-		Utils.PrintArray(output);
+		
 		return output;
 	}
 	

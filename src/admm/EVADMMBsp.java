@@ -30,47 +30,33 @@ public class EVADMMBsp extends BSP<NullWritable, NullWritable, IntWritable, Text
 	double s_norm;
 	double r_norm;
 	
-	
 	List<Result> resultList = new ArrayList<Result>();
 	List<ResultMaster> resultMasterList = new ArrayList<ResultMaster>();
 	
 	@Override
 	public void bsp(BSPPeer<NullWritable, NullWritable,IntWritable, Text, Text> peer) throws IOException, SyncException, InterruptedException {
-		int k = 0; //iteration counter
-		
-		System.out.println("BEFORE STRTING -->" + peer.getPeerName());
-		System.out.println("BEFORE STRTING -->" + this.masterTask);
+		int k = 0;
 		
 		if(peer.getPeerName().equals(this.masterTask)) //The master task
 		{	
-			System.out.println("MASTER: Starting Iteration Loop");
-			LOG.info("MASTER: Starting Iteration Loop");
-			
-			//Calculate rnorm, snorm
-			//Calculate eps_pri and eps_dual
-			//Check convergence
-			//Update rho value
 			masterContext = new MasterContext(AGGREGATOR_PATH,EV_COUNT,RHO, peer.getConfiguration());
 			
-			while(k != DEFAULT_ADMM_ITERATIONS_MAX) //TODO: Or convergence is met
+			while(k != DEFAULT_ADMM_ITERATIONS_MAX)
 			{	
 				double[] slaveAverageOptimalValue = new double[masterContext.getT()]; //Moved up here to retain the value of old average of all the xoptimal
 				
 				try {
-					//Optimize + return the cost + save the optimal X* in the x matrix last column
 					int currentEV = 0;
 					
 					//Create a list of network object but only upto total peers -1 (excluding master)
 					//Set the u and xMean for each object
 					//For each peer, populate the EVs that it has to process
 					//In the end, send only one object per machine
-					System.out.println(peer.getPeerName() + "MASTER 1.0:: Starting master");
 					List<NetworkObjectMaster> listOfNetworkMasterObjects = new ArrayList<NetworkObjectMaster>();
 					for(int i=0; i < peer.getNumPeers() -1; i++) {
 						listOfNetworkMasterObjects.add(new NetworkObjectMaster(masterContext.getu(), masterContext.getxMean(), new ArrayList<Integer>()));
 					}
 					
-					System.out.println(peer.getPeerName() + "MASTER 1.1:: Starting to send data to all EV's");
 					while(currentEV != masterContext.getN() - 1)
 					{	
 						listOfNetworkMasterObjects.get(currentEV % (peer.getNumPeers()-1)).addEV(currentEV);
@@ -83,101 +69,67 @@ public class EVADMMBsp extends BSP<NullWritable, NullWritable, IntWritable, Text
 						peerCount++;
 					}
 					
-					System.out.println(peer.getPeerName() + "MASTER 1.2:: Before sending data to peer");
 					peer.sync(); //Send messages which are equal to peer.getNumPeers - 1 
-					
-					System.out.println(peer.getPeerName() + "Master 1.3:: Receiving optimal values from Slaves => Iteration: " + currentEV);
-					
 					peer.sync();
-					//Receive message
-					//double[] s = new double[masterContext.getN()];
-					//double[] oldXAverage = slaveAverageOptimalValue;
+					
 					Pair<double[], double[][], Double> result = receiveSlaveOptimalValuesAndUpdateX(peer, masterContext.getN());
-					//slaveAverageOptimalValue = receiveSlaveOptimalValuesAndUpdateX(peer, slaveAverageOptimalValue, masterContext.getN());
-					
-					System.out.println("~~~~~~~~~ TOTAL COST RECEIVED = " + result.cost());
-					
 					slaveAverageOptimalValue = result.first();
 					
-					
-//					System.out.println("--------- AVERAGE AT MASTER ---------" );
-//					Utils.PrintArray(slaveAverageOptimalValue);
-//					System.out.println("--------- AVERAGE AT MASTER ---------" );
-//					System.out.println(peer.getPeerName() + "Master 1.4:: Data sending complete. Doing Master optimiation");
 					double[] masterXOptimalOld = masterContext.getXOptimal();
 					double[] oldXMean = masterContext.getxMean(); 
 					double costvalue = masterContext.optimize(masterContext.getXOptimal(),k);
 					
 					double totalcost = costvalue + result.cost();
-					System.out.println("~~~~~~~~~~~~ TOTAL COST = " + totalcost);
-					
-					//Do convergence stuff.
-					System.out.println(peer.getPeerName() + "Master 1.5:: Calculating Mean");
 
 					masterContext.setXMean(Utils.calculateMean(masterContext.getXOptimal(), slaveAverageOptimalValue, masterContext.getN())); 	//Take Mean
-					
-					System.out.println("Master:: Calculating U");
-					
 					masterContext.setU(Utils.vectorAdd(masterContext.getu(), masterContext.getxMean())); //Update u
-				
-					System.out.println("---->xMean: " + k + "<----");
-					Utils.PrintArray(masterContext.getxMean());
-					System.out.println("---->xMean -END<----");
-					
-					System.out.println("---->U: " + k + "<----");
-					Utils.PrintArray(masterContext.getu());
-					System.out.println("---->U -END<----");
-					
-					//resultMasterList.add(new ResultMaster(peer.getPeerName(),k,0,masterContext.getu(),masterContext.getxMean(),masterContext.getXOptimal(),costvalue,slaveAverageOptimalValue));
-					
-					
+
 					//TODO:Uncomment the convergence logic here
 					//Add the master optimal value in the matrix to check the convergence
-					double[][] xDifferenceMatrix = result.second();
-					int time = 0;
-					double[] masterXOptimalDifference = Utils.calculateVectorSubtraction(masterContext.getXOptimal(), masterXOptimalOld);
+//					double[][] xDifferenceMatrix = result.second();
+//					int time = 0;
+//					double[] masterXOptimalDifference = Utils.calculateVectorSubtraction(masterContext.getXOptimal(), masterXOptimalOld);
+//					
+//					for(double d: masterXOptimalDifference) {
+//						xDifferenceMatrix[time][xDifferenceMatrix[0].length - 1] = d; //Add the xoptimal value at the end
+//						time++;
+//					}
+//					
+//					boolean converged = checkConvergence(xDifferenceMatrix, masterContext.getxMean(), oldXMean, masterContext.getN(), masterContext.getu());
+//					
+//					if(converged == true) {
+//						System.out.println("////////////Converged/////////");
+//						break;
+//					}
 					
-					for(double d: masterXOptimalDifference) {
-						xDifferenceMatrix[time][xDifferenceMatrix[0].length - 1] = d; //Add the xoptimal value at the end
-						time++;
-					}
-					
-					boolean converged = checkConvergence(xDifferenceMatrix, masterContext.getxMean(), oldXMean, masterContext.getN(), masterContext.getu());
-					//checkConvergence(x, x_old, xMean, xMean_old, N)
-					if(converged == true) {
-						System.out.println("////////////Converged/////////");
-						break;
-					}
-					
-					resultMasterList.add(new ResultMaster(peer.getPeerName(),k,0,masterContext.getu(),masterContext.getxMean(),masterContext.getXOptimal(),costvalue,slaveAverageOptimalValue, s_norm,r_norm, totalcost));
+					//resultMasterList.add(new ResultMaster(peer.getPeerName(),k,0,masterContext.getu(),masterContext.getxMean(),masterContext.getXOptimal(),costvalue,slaveAverageOptimalValue, s_norm,r_norm, totalcost));
 
 				} catch (IloException e) {
 					// TODO Auto-generated catch block
 					e.printStackTrace();
 					System.out.println(peer.getPeerName() + "Master 1.7 :: " + e.getMessage());
+					peer.write(new IntWritable(1), new Text(peer.getPeerName() + "Master 1.7 :: " + e.getMessage()));
 				}
 				
 				k++;
 			}
-			
-			System.out.println(peer.getPeerName() + "Master 1.8:: Sending finishing message");
 			
 			//Send finish message
 			sendFinishMessage(peer);
 			peer.sync();
 			peer.sync();
 			
-			System.out.println("\\\\\\\\MASTER OUTPUT\\\\\\\\");
-			int count=0;
-			String printResult = "";
-			for(ResultMaster r : resultMasterList){
-				 printResult = r.printResult(count);
-				 peer.write(new IntWritable(1), new Text(printResult));
-				 //LOG.info(printResult);
-				
-				count++;
-			}
-			System.out.println("\\\\\\\\MASTER OUTPUT - END\\\\\\\\");
+			//System.out.println("\\\\\\\\MASTER OUTPUT\\\\\\\\");
+//			peer.write(new IntWritable(1), new Text("~~~~~~~MASTER OUTPUT~~~~~~~"));
+//			int count=0;
+//			String printResult = "";
+//			for(ResultMaster r : resultMasterList){
+//				 printResult = r.printResult(count);
+//				 peer.write(new IntWritable(1), new Text(printResult));
+//				count++;
+//			}
+//			//System.out.println("\\\\\\\\MASTER OUTPUT - END\\\\\\\\");
+//			peer.write(new IntWritable(1), new Text("~~~~~~~~MASTER OUTPTU- END ~~~~~~~"));
 			
 		}
 		else //master task else
@@ -187,19 +139,14 @@ public class EVADMMBsp extends BSP<NullWritable, NullWritable, IntWritable, Text
 			while(true)
 			{
 				peer.sync();
-				System.out.println(peer.getPeerName() + "Slave: 1 " + peer.getPeerName() + ":: Out of Sync. Receiving master data and updating u and x");
 				
 				NetworkObjectMaster masterData = receiveMasterUAndXMeanList(peer);
-				
-				System.out.println(peer.getPeerName() + "Slave: 2 Code after receiveing the message ");
 				
 				if(masterData.getEV().isEmpty()) {
 					finish = true;
 				}
 					
 				for(Integer evId: masterData.getEV()) {
-					System.out.println(peer.getPeerName() + "Slave: 1.3 Inside the slave loop");
-					
 					peer.write(new IntWritable(1), new Text(EV_PATH + (evId +1) + ".mat"));
 					slaveContext = new SlaveContext(EV_PATH + (evId +1) + ".mat", 
 							masterData.getxMean(), 
@@ -208,19 +155,13 @@ public class EVADMMBsp extends BSP<NullWritable, NullWritable, IntWritable, Text
 							RHO, isFirstIteration, peer);
 					
 					try {
-						System.out.println("Slave: 1.4 " + peer.getPeerName() + ":: Starting Slave optimization");
 						//Do optimization and write the x_optimal to mat file
 						double cost = slaveContext.optimize();
-						//Increment the cost
-						
-						
-						peer.write(new IntWritable(1), new Text("Optimized"));
-						resultList.add(new Result(peer.getPeerName(),k,evId, slaveContext.getX(),masterData.getxMean(),masterData.getU(),slaveContext.getXOptimalSlave(),cost));
+					
+						//resultList.add(new Result(peer.getPeerName(),k,evId, slaveContext.getX(),masterData.getxMean(),masterData.getU(),slaveContext.getXOptimalSlave(),cost));
 						
 						NetworkObjectSlave slave = new NetworkObjectSlave(slaveContext.getXOptimalSlave(), slaveContext.getCurrentEVNo(), slaveContext.getXOptimalDifference(), cost);
-						System.out.println("Slave: 1.5 " + peer.getPeerName() + ":: Sending slave x* to Master");
 						sendXOptimalToMaster(peer, slave);
-						
 					} catch (IloException e) {
 						// TODO Auto-generated catch block
 						e.printStackTrace();
@@ -231,18 +172,14 @@ public class EVADMMBsp extends BSP<NullWritable, NullWritable, IntWritable, Text
 				
 				peer.sync(); //Send all the data
 				if(finish == true) {
-					String printResult = "";
-					for(Result r : resultList){
-						printResult = r.printResult();
-						peer.write(new IntWritable(1), new Text(printResult));
-					}
-					
-					System.out.println(peer.getPeerName() + "Slave 1.5: Sending the finishing message");
-					
+//					String printResult = "";
+//					for(Result r : resultList){
+//						//printResult = r.printResult();
+//						//peer.write(new IntWritable(1), new Text(printResult));
+//					}
 					break;
 				}
 			}
-			
 		}
 	}
 	
@@ -255,13 +192,7 @@ public class EVADMMBsp extends BSP<NullWritable, NullWritable, IntWritable, Text
 	
 	@Override
     public void setup(BSPPeer<NullWritable, NullWritable, IntWritable, Text, Text> peer) throws IOException, SyncException, InterruptedException {
-		// Choose one as a master
-		System.out.println(peer.getPeerName() + " -- Selecting Master -> Selected Master = " + peer.getPeerName(0) + "  --Total peers: " + peer.getNumPeers());
 		this.masterTask = peer.getPeerName(0); //0 is our master
-		
-		for(String peerName: peer.getAllPeerNames()) {
-			System.out.println(peerName);
-		}
 		
 		AGGREGATOR_PATH = peer.getConfiguration().get(Constants.EVADMM_AGGREGATOR_PATH);
 		EV_PATH = peer.getConfiguration().get(Constants.EVADMM_EV_PATH);
@@ -272,18 +203,13 @@ public class EVADMMBsp extends BSP<NullWritable, NullWritable, IntWritable, Text
 	
 	private boolean checkConvergence(double[][] x, double[] xMean, double[] xMean_old, int N, double[] u)
 	{	
-		//double[] xMeanOld_xMean = Utils.scaleVector(Utils.calculateVectorSubtraction(xMean_old, xMean), N);
 		double[] xMeanOld_xMean = Utils.calculateVectorSubtraction(xMean_old, xMean);
 		double[] result = Utils.addMatrixAndVector (x, xMeanOld_xMean);
 		double[] s = Utils.scalerMultiply(result, -1*this.RHO*N);
 		s_norm= Utils.calculateNorm(s);
 		r_norm = Utils.calculateNorm(Utils.scaleVector(xMean, N));
-		//r_norm = Utils.calculateNorm(xMean);
 		
-		//eps_pri = sqrt(T*N);
 		double eps_pri = Math.sqrt(xMean.length * N);
-		
-		//eps_dual= sqrt(N*T)*1e-4 + 1e-4 *norm(rho*u);
 		double eps_dual = (eps_pri * 0.0001) + (0.0001 * Utils.calculateNorm(Utils.scalerMultiply(u, EVADMMBsp.RHO)));
 		
 		if(r_norm <= eps_pri && s_norm <= eps_dual)
@@ -298,19 +224,8 @@ public class EVADMMBsp extends BSP<NullWritable, NullWritable, IntWritable, Text
 		
 		masterContext.setRho(EVADMMBsp.RHO);
 		
-		System.out.println("CONVERGED VALUES ////////// s_norm: " + s_norm + " -- r_norm: " + r_norm + " --eps_dual: " + eps_dual + " -- eps_pri" + eps_pri);
+		//System.out.println("CONVERGED VALUES ////////// s_norm: " + s_norm + " -- r_norm: " + r_norm + " --eps_dual: " + eps_dual + " -- eps_pri" + eps_pri);
 		return false;
-//		double[][] x_xoldMatrix = Utils.calculateMatrixSubtraction(x,x_old);
-//		double[] xMeanOld_xMean = Utils.calculateVectorSubtraction(xMean_old, xMean);
-//		double[] result = Utils.addMatrixAndVector (x_xoldMatrix, xMeanOld_xMean);
-//		double[] s = Utils.scalerMultiply(result, -1*this.RHO*N);
-//		double s_norm= Utils.calculateNorm(s);
-//		double r_norm = Utils.calculateNorm(Utils.scaleVector(xMean, N));
-//		
-//		if(r_norm <= 0.1 && s_norm <= 0.1)
-//			return true;
-//		
-//		return false;
 	}
 	
 	private void sendFinishMessage(BSPPeer<NullWritable, NullWritable, IntWritable, Text, Text> peer) throws IOException
@@ -334,7 +249,6 @@ public class EVADMMBsp extends BSP<NullWritable, NullWritable, IntWritable, Text
 	
 	private Pair<double[],double[][], Double> receiveSlaveOptimalValuesAndUpdateX(BSPPeer<NullWritable, NullWritable, IntWritable, Text, Text> peer, int totalN) throws IOException
 	{
-		//List<MasterContext> list = new ArrayList<MasterContext>();
 		NetworkObjectSlave slave;
 		Text receivedJson;
 		
@@ -378,15 +292,12 @@ public class EVADMMBsp extends BSP<NullWritable, NullWritable, IntWritable, Text
 	{
 		NetworkObjectMaster master = new NetworkObjectMaster();
 		Text receivedJson;
-		System.out.println(peer.getPeerName() + "Slave: 1.1.0 Going to receive the data");
+		
 		while ((receivedJson = peer.getCurrentMessage()) != null) //Receive initial array 
 		{	
 			master = Utils.jsonToNetworkMaster(receivedJson.toString());
-			System.out.println(peer.getPeerName() + "Slave: 1.1.1 Data received. Breaking the loop");
 			break;
 		}
-		
-		System.out.println(peer.getPeerName() + "Slave: 1.1.2 Out of receving the data");
 		
 		return master;
 	}
