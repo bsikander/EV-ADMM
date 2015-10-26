@@ -17,7 +17,7 @@ import org.apache.hama.bsp.BSPPeer;
 
 public class SlaveContext {
 	double[] x_salve;
-	private double gamma = 1;
+	private double gamma = 0;
 	private double alpha;
 	private double rho;
 	private double[] xi_max;
@@ -33,7 +33,7 @@ public class SlaveContext {
 	private Configuration conf;
 	private double[] xOptimalDifference;
 	
-	public SlaveContext(String fileName, double[] xMean, double[] u, int currentEVNo, double rhoValue, boolean isFirstIteration, BSPPeer<NullWritable, NullWritable,IntWritable, Text, Text> peer) throws IOException
+	public SlaveContext(String fileName, double[] xMean, double[] u, int currentEVNo, double rhoValue, boolean isFirstIteration, BSPPeer<NullWritable, NullWritable,IntWritable, Text, Text> peer, double delta) throws IOException
 	{	
 		firstIteration = isFirstIteration;
 		conf = peer.getConfiguration();
@@ -47,10 +47,13 @@ public class SlaveContext {
 		rho = rhoValue;
 		evFileName = fileName; 
 		
-		this.alpha = (0.05/3600) * (15*60);
+		this.alpha = ((0.05/3600) * (15*60)) / delta;
+		//System.out.println("DELTA --> " + delta + "  ALPHA --> " + this.alpha);
 		
-		this.xi_max = Utils.scalerMultiply(this.slaveData.getD(), 4);
-		this.xi_min = Utils.scalerMultiply(this.slaveData.getD(), -4);
+//		this.xi_max = Utils.scalerMultiply(this.slaveData.getD(), 4);
+//		this.xi_min = Utils.scalerMultiply(this.slaveData.getD(), -4);
+		this.xi_max = Utils.scalerMultiply(this.slaveData.getD(), 20);
+		this.xi_min = Utils.scalerMultiply(this.slaveData.getD(), -20);
 		
 		this.xMean = xMean;
 		this.u = u;
@@ -108,8 +111,8 @@ public class SlaveContext {
 			cplex.addGe(cplex.sum(BXExpGe), this.slaveData.getSmin()[h]);
 		}
 		
-		//if(firstIteration)
-			//cplex.exportModel("EV_" + currentEVNo + ".lp");
+		if(firstIteration)
+			cplex.exportModel("EV_" + currentEVNo + ".lp");
 		
 		cplex.solve();
 		
@@ -120,11 +123,17 @@ public class SlaveContext {
 			x_optimal[u] = cplex.getValues(x_i)[u];
 		}
 		
+		System.out.println("@@@@@@@Slave Opti Start");
+		Utils.PrintArray(x_optimal);
+		
 		//Calculate x_i^k - x_i^k-1
 		xOptimalDifference = Utils.calculateVectorSubtraction(x_optimal, xOptimalDifference);
 		
 		//Write the x_optimal to mat file
 		Utils.SlaveXToMatFile(evFileName, x_optimal, conf);
+		
+		//TODO: Print -Remove
+		
 		
 		return cplex.getObjValue();
 	}

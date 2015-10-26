@@ -1,30 +1,34 @@
 package admm;
 
-public class MasterData {
-	private double[] re;
+public class MasterDataValley {
 	private double[] D;
 	private double[] price;
+	private double delta;
 	
-	
-	public MasterData(double[] re, double[] D, double[] price) {
-		this.re = re;
+	public MasterDataValley(double[] D, double[] price) {
 		this.D = D;
 		this.price = scalePrice(price);
-	}
-	
-	public double[] getRe() {
-		return this.re;
+		
+		System.out.println("D START");
+		Utils.PrintArray(this.price);
+		Utils.PrintArray(D);
+		System.out.println("D ENDDDDD");
+		
+		this.delta = Utils.calculateMean(this.price) / Utils.calculateMean(D);	//Equation to calculate alpha is different in valley
 	}
 	
 	public double[] getD() {
 		return this.D;
 	}
 	
+	public double getDelta()
+	{
+		return this.delta;
+	}
+	
 	public double[] getPrice() {
 		return this.price;
 	}
-	
-	
 	
 	private double[] scalePrice(double[] price)
 	{

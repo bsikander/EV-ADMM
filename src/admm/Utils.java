@@ -64,6 +64,38 @@ public class Utils {
 		}
 	}
 	
+	public static MasterDataValley LoadMasterDataValleyFillingFromMatFile(String filePath, Configuration conf)
+	{
+		File tempMatFile = null;
+		try
+		{
+			//File tempMatFile = getFileFromHDFS(conf, filePath);
+			tempMatFile = getFileFromHDFS(conf, filePath);
+			MatFileReader matfilereader = new MatFileReader(tempMatFile);
+			
+			//double[][] reArray = ((MLDouble)matfilereader.getMLArray("re")).getArray(); //Conversion
+			double[][] DArray = ((MLDouble)matfilereader.getMLArray("D")).getArray(); //Conversion
+			double[][] priceArray = ((MLDouble)matfilereader.getMLArray("price")).getArray();
+			
+			MasterDataValley context = new MasterDataValley(
+												getSingleArrayFromDouble( DArray ),
+												priceArray[0]
+												);
+			
+			return context;
+		}
+		catch(Exception e)
+		{
+			System.out.println("Exception in LoadMasterDataValley function in Utils " + e.getMessage() + " == filePath: " + filePath);
+			return null;
+		}
+		finally {
+			if(tempMatFile != null) {
+				tempMatFile.delete();
+			}
+		}
+	}
+	
 	private static FileSystem getFSObject(Configuration conf) throws IOException, URISyntaxException
 	{
 		FileSystem fs = FileSystem.get(conf);
@@ -321,6 +353,17 @@ public class Utils {
 		for(int i =0; i< xMasterOptimal.length; i++)
 			average[i] = round(average[i]/(double)evCount);
 		return average;
+	}
+	
+	public static double calculateMean(double[] vector)
+	{
+		double mean = 0;
+		
+		for(int i =0; i< vector.length; i++)
+			mean = mean + vector[i];
+		
+		return round(mean/vector.length);
+		
 	}
 	
 	public static double round(double value) {

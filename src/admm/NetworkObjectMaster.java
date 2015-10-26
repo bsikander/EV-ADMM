@@ -25,16 +25,21 @@ public class NetworkObjectMaster implements Writable {
 	@JsonProperty("EVs")
 	private List<Integer> EVs;
 	
+	@JsonProperty("delta")
+	private double delta;
+	
+	
 	public NetworkObjectMaster()
 	{
 		EVs = new ArrayList<Integer>();
 	}
 	
-	public NetworkObjectMaster(double[] u, double[] xMean, List<Integer> EVs)
+	public NetworkObjectMaster(double[] u, double[] xMean, List<Integer> EVs, double delta)
 	{
 		this.u = u;
 		this.xMean = xMean;	
 		this.EVs = EVs;
+		this.delta = delta;
 	}
 	
 	public void setNetworkObjectMaster(NetworkObjectMaster n)
@@ -42,6 +47,7 @@ public class NetworkObjectMaster implements Writable {
 		this.u = n.u;
 		this.xMean = n.xMean;
 		this.EVs = n.EVs;
+		this.delta = n.delta;
 	}
 	
 	@Override
@@ -75,6 +81,14 @@ public class NetworkObjectMaster implements Writable {
 		return this.EVs;
 	}
 	
+	@JsonProperty("delta")
+	public double getDelta()
+	{
+		return this.delta;
+	}
+	
+
+	
 	public void setU(double[] value)
 	{
 		this.u = value;
@@ -88,6 +102,11 @@ public class NetworkObjectMaster implements Writable {
 	public void addEV(int evId)
 	{
 		EVs.add(evId);
+	}
+	
+	public void setDelta(double delta)
+	{
+		this.delta = delta;
 	}
 	
 }

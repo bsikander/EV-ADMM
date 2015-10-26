@@ -137,7 +137,7 @@ private static void writeSlaveFile() throws IOException {
 
 private static void writeMasterFile() throws FileNotFoundException, UnsupportedEncodingException
 {
-MasterData mData = LoadMasterDataFromMatFile("/Users/raja/Documents/ADMM_matlab/Aggregator/aggregator.mat");
+	MasterData mData = LoadMasterDataFromMatFile("/Users/raja/Documents/ADMM_matlab/Aggregator/aggregator.mat");
 	//"timeSlot,price,rho"
 	String data = "96|[";
 	
