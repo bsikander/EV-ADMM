@@ -12,6 +12,9 @@ import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.commons.math3.linear.MatrixUtils;
+import org.apache.commons.math3.linear.RealMatrix;
+import org.apache.commons.math3.linear.SingularValueDecomposition;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FSDataInputStream;
 import org.apache.hadoop.fs.FileSystem;
@@ -453,6 +456,24 @@ public class Utils {
 		return result;
 	}
 	
+	public static double[] calculateEVSum(double[][] evData)
+	{
+		int count = 0;
+		double[] result = new double[evData.length];
+		for(int i=0; i< evData.length ; i++)
+		{
+			double sum = 0;
+			for(int j=0; j < evData[0].length - 1; j++) //Donot include master optimization
+			{
+				sum = sum + evData[i][j];
+			}
+			result[count] = sum;
+			count++;
+		}
+		
+		return result;
+	}
+	
 	public static double calculateNorm(double[] vec)
 	{
 		double result = 0.0;
@@ -461,6 +482,13 @@ public class Utils {
 		}
 		
 		return Math.sqrt(result);
+	}
+	
+	public static double calculateNorm(double[][] mat)
+	{
+		RealMatrix realMatrix = MatrixUtils.createRealMatrix(mat);
+		SingularValueDecomposition svd = new SingularValueDecomposition(realMatrix);
+		return svd.getNorm();
 	}
 	
 	public static double[] scaleVector(double[] vec, int N)

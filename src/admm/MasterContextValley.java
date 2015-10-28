@@ -67,7 +67,10 @@ public class MasterContextValley {
 		
 		this.setXOptimal( Utils.calculateVectorSubtraction(rhoMultiplyK, rhoMultiplyD ));
 		
-		return 0;
+		//cost= norm(D-x)^2;
+		double cost = Utils.calculateNorm(Utils.vectorAdd(masterData.getD(), Utils.scalerMultiply(this.getXOptimal(), -1)));
+
+		return cost*cost;
 	}
 	
 	public double optimize1(double[] xold,int iteration) throws IloException, FileNotFoundException

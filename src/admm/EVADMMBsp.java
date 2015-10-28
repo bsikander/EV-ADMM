@@ -32,6 +32,7 @@ public class EVADMMBsp extends BSP<NullWritable, NullWritable, IntWritable, Text
 	private static int EV_COUNT;
 	double s_norm;
 	double r_norm;
+	double v = 0;
 	
 	List<Result> resultList = new ArrayList<Result>();
 	List<ResultMaster> resultMasterList = new ArrayList<ResultMaster>();
@@ -61,11 +62,6 @@ public class EVADMMBsp extends BSP<NullWritable, NullWritable, IntWritable, Text
 					List<NetworkObjectMaster> listOfNetworkMasterObjects = new ArrayList<NetworkObjectMaster>();
 					for(int i=0; i < peer.getNumPeers() -1; i++) {
 						listOfNetworkMasterObjects.add(new NetworkObjectMaster(masterContext.getu(), masterContext.getxMean(), new ArrayList<Integer>(),masterContext.getMasterData().getDelta()));
-						
-						System.out.println("U");
-						Utils.PrintArray(masterContext.getu());
-						System.out.println("xMean");
-						Utils.PrintArray(masterContext.getxMean());
 					}
 					
 					while(currentEV != masterContext.getN() - 1)
@@ -83,19 +79,14 @@ public class EVADMMBsp extends BSP<NullWritable, NullWritable, IntWritable, Text
 					peer.sync(); //Send messages which are equal to peer.getNumPeers - 1 
 					peer.sync();
 					
-					Pair<double[], double[][], Double> result = receiveSlaveOptimalValuesAndUpdateX(peer, masterContext.getN());
-					slaveAverageOptimalValue = result.first();
-					
-					xsum = Utils.vectorAdd(xsum, slaveAverageOptimalValue); //TODO: Added by me to check the total xsum
+					Pair<double[], double[][], Double, double[][]> result = receiveSlaveOptimalValuesAndUpdateX(peer, masterContext.getN());
+					slaveAverageOptimalValue = result.averageXReceived();
+
+					xsum = Utils.calculateEVSum(result.xsum());
 					
 					double[] masterXOptimalOld = masterContext.getXOptimal();
 					double[] oldXMean = masterContext.getxMean(); 
 					double costvalue = masterContext.optimize(masterContext.getXOptimal(),k);
-					
-					System.out.println("Master optimizal value - START");
-					Utils.PrintArray(masterContext.getXOptimal());
-					System.out.println("Master optimizal value - END");
-					
 					
 					double totalcost = costvalue + result.cost();
 
@@ -104,16 +95,34 @@ public class EVADMMBsp extends BSP<NullWritable, NullWritable, IntWritable, Text
 
 					//TODO:Uncomment the convergence logic here
 					//Add the master optimal value in the matrix to check the convergence
-//					double[][] xDifferenceMatrix = result.second();
-//					int time = 0;
-//					double[] masterXOptimalDifference = Utils.calculateVectorSubtraction(masterContext.getXOptimal(), masterXOptimalOld);
-//					
-//					for(double d: masterXOptimalDifference) {
-//						xDifferenceMatrix[time][xDifferenceMatrix[0].length - 1] = d; //Add the xoptimal value at the end
-//						time++;
-//					}
-//					
-//					boolean converged = checkConvergence(xDifferenceMatrix, masterContext.getxMean(), oldXMean, masterContext.getN(), masterContext.getu());
+					double[][] xDifferenceMatrix = result.xDifferenceMatrix();
+					double[][] xMatrix = result.xsum();
+					
+					int time = 0;
+					double[] masterXOptimalDifference = Utils.calculateVectorSubtraction(masterContext.getXOptimal(), masterXOptimalOld);
+					double[] masterXOptimal = masterContext.getXOptimal();
+					
+					for(double d: masterXOptimalDifference) {
+						//Fill the master optimal difference value in xDifference Matrix 
+						xDifferenceMatrix[time][xDifferenceMatrix[0].length - 1] = d; //Add the xoptimal value at the end
+						
+						xMatrix[time][xMatrix[0].length - 1] =  masterXOptimal[time]; //Fill the master optimal value in XMatrix
+						time++;
+					}
+					
+					//Just for test remove the print
+					System.out.println("*********Printing Difference Matrix");
+					for(int i = 0; i< xDifferenceMatrix[0].length; i++)
+					{
+						for(int j =0; j< xDifferenceMatrix.length;j++)
+						{
+							System.out.print(xDifferenceMatrix[j][i] + "   ");
+						}
+						System.out.println();
+					}
+					System.out.println("*********Printing Difference Matrix END");
+					
+					boolean converged = checkConvergence(xMatrix,xDifferenceMatrix, masterContext.getxMean(), oldXMean, masterContext.getN(), masterContext.getu());
 //					
 //					if(converged == true) {
 //						System.out.println("////////////Converged/////////");
@@ -138,16 +147,16 @@ public class EVADMMBsp extends BSP<NullWritable, NullWritable, IntWritable, Text
 			peer.sync();
 			
 			//System.out.println("\\\\\\\\MASTER OUTPUT\\\\\\\\");
-			peer.write(new IntWritable(1), new Text("~~~~~~~MASTER OUTPUT~~~~~~~"));
-			int count=0;
-			String printResult = "";
-			for(ResultMaster r : resultMasterList){
-				 printResult = r.printResult(count);
-				 peer.write(new IntWritable(1), new Text(printResult));
-				count++;
-			}
-			//System.out.println("\\\\\\\\MASTER OUTPUT - END\\\\\\\\");
-			peer.write(new IntWritable(1), new Text("~~~~~~~~MASTER OUTPTU- END ~~~~~~~"));
+//			peer.write(new IntWritable(1), new Text("~~~~~~~MASTER OUTPUT~~~~~~~"));
+//			int count=0;
+//			String printResult = "";
+//			for(ResultMaster r : resultMasterList){
+//				 printResult = r.printResult(count);
+//				 peer.write(new IntWritable(1), new Text(printResult));
+//				count++;
+//			}
+//			//System.out.println("\\\\\\\\MASTER OUTPUT - END\\\\\\\\");
+//			peer.write(new IntWritable(1), new Text("~~~~~~~~MASTER OUTPTU- END ~~~~~~~"));
 			
 //			System.out.println("\n\n XSUMMMMMM \n\n");
 //			Utils.PrintArray(xsum);
@@ -195,10 +204,10 @@ public class EVADMMBsp extends BSP<NullWritable, NullWritable, IntWritable, Text
 				peer.sync(); //Send all the data
 				if(finish == true) {
 					String printResult = "";
-					for(Result r : resultList){
-						printResult = r.printResult();
-						peer.write(new IntWritable(1), new Text(printResult));
-					}
+//					for(Result r : resultList){
+//						printResult = r.printResult();
+//						peer.write(new IntWritable(1), new Text(printResult));
+//					}
 					break;
 				}
 			}
@@ -223,28 +232,60 @@ public class EVADMMBsp extends BSP<NullWritable, NullWritable, IntWritable, Text
 		EV_COUNT = Integer.parseInt(peer.getConfiguration().get(Constants.EVADMM_EV_COUNT));
 	}
 	
-	private boolean checkConvergence(double[][] x, double[] xMean, double[] xMean_old, int N, double[] u)
+	private boolean checkConvergence(double[][] xMatrix, double[][] xDifferenceMatrix, double[] xMean, double[] xMean_old, int N, double[] u)
 	{	
 		double[] xMeanOld_xMean = Utils.calculateVectorSubtraction(xMean_old, xMean);
-		double[] result = Utils.addMatrixAndVector (x, xMeanOld_xMean);
+		double[] result = Utils.addMatrixAndVector (xDifferenceMatrix, xMeanOld_xMean);
 		double[] s = Utils.scalerMultiply(result, -1*this.RHO*N);
 		s_norm= Utils.calculateNorm(s);
 		r_norm = Utils.calculateNorm(Utils.scaleVector(xMean, N));
+
+		//eps_pri= sqrt(N*T)*1 + 1e-3 * max([norm(x), norm(x(:)- repmat(xmean,N,1))]);
+		double max = Math.max( Utils.calculateNorm(xMatrix), Utils.calculateNorm( Utils.addMatrixAndVector(xMatrix, Utils.scalerMultiply(xMean, -1))) );
 		
-		double eps_pri = Math.sqrt(xMean.length * N);
-		double eps_dual = (eps_pri * 0.0001) + (0.0001 * Utils.calculateNorm(Utils.scalerMultiply(u, EVADMMBsp.RHO)));
+		System.out.println("<><><> Norm X: " + Utils.calculateNorm(xMatrix) + "  Norm Second: " + Utils.calculateNorm( Utils.addMatrixAndVector(xMatrix, Utils.scalerMultiply(xMean, -1))));
+		double eps_pri = Math.sqrt(xMean.length * N) + (0.001 * max);
+		
+		//eps_dual= sqrt(N*T)*1 + 1e-3 *norm(rho*u);
+		double eps_dual = (Math.sqrt(xMean.length * N) * 1) + (0.001 * Utils.calculateNorm(Utils.scalerMultiply(u, EVADMMBsp.RHO)));
+		
+		Utils.PrintArray(u);
+		System.out.println("<><><>RHO: " +EVADMMBsp.RHO  + " R_NORM: " + r_norm + " -- eps_pri: " + eps_pri + " -- s_norm: " + s_norm + " -- eps_dual: " + eps_dual);
 		
 		if(r_norm <= eps_pri && s_norm <= eps_dual)
 			return true;
 		
-		if(r_norm > 10* s_norm) {
-			EVADMMBsp.RHO = 2*EVADMMBsp.RHO;
-		}
-		else if(s_norm > 10*r_norm) {
-			EVADMMBsp.RHO = EVADMMBsp.RHO/2;
-		}
 		
-		masterContext.setRho(EVADMMBsp.RHO);
+		//MATLAB CODE
+//		lambda=1e-1;
+//	    mu=1e-1;
+//	    
+//	    rhoold=rho;
+//	    u=rho/rhoold * u;
+//	    
+//	    vold=v;
+//	    v= rho *r_norm/(s_norm) -1;
+//	    
+//	    rho= rho* exp(lambda*v + mu*(v-vold));
+		
+		double lambda = 0.1;
+		double mu = 0.1;
+		double vold = v;
+		v = ((EVADMMBsp.RHO * (r_norm/s_norm)) -1);
+		System.out.println("<><><>RHO: " + EVADMMBsp.RHO * Math.exp( (lambda* v) + (mu*(v-vold)) ) );
+		//EVADMMBsp.RHO =  EVADMMBsp.RHO * Math.exp( (lambda* v) + (mu*(v-vold)) );
+		
+		//masterContext.setRho(EVADMMBsp.RHO);
+				
+			//OLD RHO UPDATE	
+//		if(r_norm > 10* s_norm) {
+//			EVADMMBsp.RHO = 2*EVADMMBsp.RHO;
+//		}
+//		else if(s_norm > 10*r_norm) {
+//			EVADMMBsp.RHO = EVADMMBsp.RHO/2;
+//		}
+//		
+//		masterContext.setRho(EVADMMBsp.RHO);
 		
 		//System.out.println("CONVERGED VALUES ////////// s_norm: " + s_norm + " -- r_norm: " + r_norm + " --eps_dual: " + eps_dual + " -- eps_pri" + eps_pri);
 		return false;
@@ -269,13 +310,14 @@ public class EVADMMBsp extends BSP<NullWritable, NullWritable, IntWritable, Text
 		peer.send(this.masterTask, new Text(Utils.networkSlaveToJson(object)));
 	}
 	
-	private Pair<double[],double[][], Double> receiveSlaveOptimalValuesAndUpdateX(BSPPeer<NullWritable, NullWritable, IntWritable, Text, Text> peer, int totalN) throws IOException
+	private Pair<double[],double[][], Double, double[][]> receiveSlaveOptimalValuesAndUpdateX(BSPPeer<NullWritable, NullWritable, IntWritable, Text, Text> peer, int totalN) throws IOException
 	{
 		NetworkObjectSlave slave;
 		Text receivedJson;
 		
 		double[][] s = new double[this.masterContext.getXOptimal().length][totalN];
-		double[] averageXReceived = Utils.getZeroArray(this.masterContext.getXOptimal().length); 
+		double[] averageXReceived = Utils.getZeroArray(this.masterContext.getXOptimal().length);
+		double[][] allOptimalSlaveXReceived = new double[this.masterContext.getXOptimal().length][totalN];
 		
 		int ev = 0;
 		double cost = 0;
@@ -291,10 +333,18 @@ public class EVADMMBsp extends BSP<NullWritable, NullWritable, IntWritable, Text
 				s[i][ev] = d;
 				i++;
 			}
+			
+			int j = 0;
+			for(double d: slave.getXi()) { //Store all the optimizal slave values recieved inside this array
+				allOptimalSlaveXReceived[j][ev] = d;
+				j++;
+			}
+			
 			ev++;
 		}
 	
-		return new Pair<double[],double[][], Double>(averageXReceived,s, cost);
+		//return new Pair<double[],double[][], Double>(averageXReceived,s, cost);
+		return new Pair<double[],double[][], Double,double[][]>(averageXReceived,s, cost,allOptimalSlaveXReceived); //For time being, I have removed the s from return. If required then use it.
 	}
 	
 	private NetworkObjectMaster receiveMasterUAndXMean(BSPPeer<NullWritable, NullWritable, IntWritable, Text, Text> peer) throws IOException
@@ -331,27 +381,34 @@ public class EVADMMBsp extends BSP<NullWritable, NullWritable, IntWritable, Text
 		Cost
 	}
 	
-	class Pair<T,U,C> {
+	class Pair<T,U,C,X> {
 	    private final T m_first;
 	    private final U m_second;
 	    private final C m_cost;
+	    private final X m_xsum;
 
-	    public Pair(T first, U second, C cost) {
+	    public Pair(T first, U second, C cost, X m_xsum) {
 	        m_first = first;
 	        m_second = second;
 	        m_cost = cost;
+	        this.m_xsum = m_xsum;
 	    }
 
-	    public T first() {
+	    public T averageXReceived() {
 	        return m_first;
 	    }
 
-	    public U second() {
+	    public U xDifferenceMatrix() {
 	        return m_second;
 	    }
 	    
 	    public C cost() {
 	    	return m_cost;
+	    }
+	    
+	    public X xsum()
+	    {
+	    	return m_xsum;
 	    }
 	}
 }

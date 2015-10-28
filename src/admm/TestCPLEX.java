@@ -15,6 +15,9 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.commons.math3.linear.MatrixUtils;
+import org.apache.commons.math3.linear.RealMatrix;
+import org.apache.commons.math3.linear.SingularValueDecomposition;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.NullWritable;
@@ -32,11 +35,19 @@ import ilog.concert.*;
 import ilog.cplex.*;
 public class TestCPLEX {
 public static void main(String[] args) throws IloException, IOException {
+	double[][] matrixData = { {1d,2d,3d}, {4d,5d,6d}};
+	RealMatrix a = MatrixUtils.createRealMatrix(matrixData);
+	System.out.println(a.getNorm());
+	System.out.println(a.getFrobeniusNorm());
+	SingularValueDecomposition b = new SingularValueDecomposition(a);
+	System.out.println(b.getNorm());
+	
 	//parseTxtFileToGenerateMatFiles();
 	//writeMasterFile();
-	writeSlaveFile();
-	System.out.println("Done");
-//	writeDummyFile();
+//	writeSlaveFile();
+//	System.out.println("Done");
+
+	//	writeDummyFile();
 	
 //	Map<String, double[]> data = new HashMap<String, double[]>();
 //	data.put("test", new double[] {1,2,3});

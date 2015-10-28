@@ -42,7 +42,10 @@ public class SlaveContext {
 		this.x = slaveData.getXOptimal(); //Read the last optimal value directly from the .mat file
 		x_optimal = new double[this.x.length];
 		
-		xOptimalDifference = slaveData.getXOptimal(); //Take the old value of optimal value from the mat file
+		if(!isFirstIteration)
+			xOptimalDifference = slaveData.getXOptimal(); //Take the old value of optimal value from the mat file
+		else
+			xOptimalDifference = new double[slaveData.getXOptimal().length];
 		
 		rho = rhoValue;
 		evFileName = fileName; 
@@ -111,8 +114,8 @@ public class SlaveContext {
 			cplex.addGe(cplex.sum(BXExpGe), this.slaveData.getSmin()[h]);
 		}
 		
-		if(firstIteration)
-			cplex.exportModel("EV_" + currentEVNo + ".lp");
+//		if(firstIteration)
+//			cplex.exportModel("EV_" + currentEVNo + ".lp");
 		
 		cplex.solve();
 		
@@ -133,8 +136,7 @@ public class SlaveContext {
 		Utils.SlaveXToMatFile(evFileName, x_optimal, conf);
 		
 		//TODO: Print -Remove
-		
-		
+//		System.out.println("$$$$$$$$$$////////// Cost Value ////// + " + cplex.getObjValue());
 		return cplex.getObjValue();
 	}
 	
