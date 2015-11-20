@@ -15,6 +15,7 @@ import java.util.List;
 import org.apache.commons.math3.linear.MatrixUtils;
 import org.apache.commons.math3.linear.RealMatrix;
 import org.apache.commons.math3.linear.SingularValueDecomposition;
+import org.apache.commons.math3.stat.descriptive.moment.Variance;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FSDataInputStream;
 import org.apache.hadoop.fs.FileSystem;
@@ -491,6 +492,13 @@ public class Utils {
 		return svd.getNorm();
 	}
 	
+	public static double calculateVariance(double[] data)
+	{
+		Variance v = new Variance();
+		
+		return v.evaluate(data);
+	}
+	
 	public static double[] scaleVector(double[] vec, int N)
 	{
 		double[] scaledVec = new double[vec.length*N];
@@ -532,5 +540,22 @@ public class Utils {
 
     public static NetworkObjectSlave jsonToNetworkSlave(String json) throws IOException {
         return OBJECT_MAPPER.readValue(json, NetworkObjectSlave.class);
+    }
+    
+    public static double getMean(double[] data)
+    {
+        double sum = 0.0;
+        for(double a : data)
+            sum += a;
+        return sum/data.length;
+    }
+
+    public static double getVariance(double[] data)
+    {
+        double mean = getMean(data);
+        double temp = 0;
+        for(double a :data)
+            temp += (mean-a)*(mean-a);
+        return temp/data.length;
     }
 }

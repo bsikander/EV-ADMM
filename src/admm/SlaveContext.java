@@ -4,11 +4,16 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.util.Iterator;
 
+import ilog.concert.IloConstraint;
 import ilog.concert.IloException;
 import ilog.concert.IloNumExpr;
 import ilog.concert.IloNumVar;
+import ilog.concert.IloRange;
 import ilog.cplex.IloCplex;
+import ilog.cplex.IloCplex.CplexStatus;
+
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.NullWritable;
@@ -117,34 +122,85 @@ public class SlaveContext {
 //		if(firstIteration)
 //			cplex.exportModel("EV_" + currentEVNo + ".lp");
 		
-		cplex.solve();
-		
-		x_optimal = new double[x_i.length];
-		
-		for(int u=0; u< x_i.length; u++)
-		{
-			x_optimal[u] = cplex.getValues(x_i)[u];
+		if ( cplex.solve() ) {
+			//cplex.solve();
+			
+			x_optimal = new double[x_i.length];
+			
+			for(int u=0; u< x_i.length; u++)
+			{
+				x_optimal[u] = cplex.getValues(x_i)[u];
+			}
+			
+			System.out.println("@@@@@@@Slave Opti Start");
+			Utils.PrintArray(x_optimal);
+			
+			//Calculate x_i^k - x_i^k-1
+			xOptimalDifference = Utils.calculateVectorSubtraction(x_optimal, xOptimalDifference);
+			
+			//Write the x_optimal to mat file
+			Utils.SlaveXToMatFile(evFileName, x_optimal, conf);
+			
+			//TODO: Print -Remove
+	//		System.out.println("$$$$$$$$$$////////// Cost Value ////// + " + cplex.getObjValue());
+			return cplex.getObjValue();
 		}
-		
-		System.out.println("@@@@@@@Slave Opti Start");
-		Utils.PrintArray(x_optimal);
-		
-		//Calculate x_i^k - x_i^k-1
-		xOptimalDifference = Utils.calculateVectorSubtraction(x_optimal, xOptimalDifference);
-		
-		//Write the x_optimal to mat file
-		Utils.SlaveXToMatFile(evFileName, x_optimal, conf);
-		
-		//TODO: Print -Remove
-//		System.out.println("$$$$$$$$$$////////// Cost Value ////// + " + cplex.getObjValue());
-		return cplex.getObjValue();
+		else
+		{
+			System.out.println(">>> CPLEX SOLVE FAILED !!!");
+			cplex.exportModel("EV_" + currentEVNo + ".lp");
+			Utils.PrintArray(this.x);
+			Utils.PrintArray(this.xMean);
+			Utils.PrintArray(this.u);
+			System.out.println("RHO -> " + this.rho + " >> Alpha->" + this.alpha + " >>gamma ->" + this.gamma);
+			
+			CplexStatus s = cplex.getCplexStatus();
+			//cplex.exportModel("27MatFileModel.lp");
+			System.out.println("Status -> " + s.toString());
+			//System.out.println("CPlex -> " + cplex.getModel().toString());
+			
+//			IloRange[] con = new IloRange[cplex.getNrows()];
+//			System.out.println("Size -> " + cplex.getNrows());
+//			
+//			Iterator it = cplex.iterator();
+//			int i=0;
+//			while (it.hasNext()) {
+//			  Object thing = it.next();
+////			  if (thing instanceof IloNumVar) {
+////			    System.out.print("Variable ");
+////			  }
+//			   if (thing instanceof IloRange) {
+//				   con[i] = (IloRange) thing;
+//			  }
+//			  else if (thing instanceof IloObjective) {
+//			    System.out.print("Objective ");
+//			  }
+//			  System.out.println("named " +
+//			                     ((IloAddable) thing).getName());
+			//}
+//			cplex.getinf
+//			
+//			
+//			
+//			cplex.feasOpt(con, arg1, arg2)
+			//cplex.getInfeasibilities(cplex.feasOpt(arg0, arg1))
+			//System.out.println("IIS -> " + cplex.getIIS().toString());
+//			cplex.getModel();
+//			
+//			cplex.getInfeasibilities()
+			
+//			cplex.getin
+//			cplex.feasOpt(cplex., arg1)
+			
+			return 0;
+		}
 	}
 	
 	
 	private double[] subtractOldMeanU(double[] xold)
 	{
 		xold = Utils.scalerMultiply(xold, -1);
-		return Utils.vectorAdd(Utils.vectorAdd(xold, this.xMean), this.u);
+		return Utils.vectorAdd(Utils.vectorAdd(xold, this.xMean),this.u);
 	}
 	
 	public int getCurrentEVNo()
