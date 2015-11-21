@@ -36,8 +36,8 @@ public class EVADMMBsp extends BSP<NullWritable, NullWritable, IntWritable, Text
 	double r_norm;
 	double v = 0;
 	
-	List<Result> resultList = new ArrayList<Result>();
-	List<ResultMaster> resultMasterList = new ArrayList<ResultMaster>();
+//	List<Result> resultList = new ArrayList<Result>();
+//	List<ResultMaster> resultMasterList = new ArrayList<ResultMaster>();
 	
 	@Override
 	public void bsp(BSPPeer<NullWritable, NullWritable,IntWritable, Text, Text> peer) throws IOException, SyncException, InterruptedException {
@@ -98,10 +98,10 @@ public class EVADMMBsp extends BSP<NullWritable, NullWritable, IntWritable, Text
 					double totalcost = costvalue + result.cost();
 					//cost= norm(D+xsum)^2
 					
-					System.out.println(">>>>>>>>>>> XSUMMM");
-					Utils.PrintArray(xsum);
-					System.out.println("&&&&&&& DDD");
-					Utils.PrintArray(masterContext.getMasterData().getD());
+//					System.out.println(">>>>>>>>>>> XSUMMM");
+//					Utils.PrintArray(xsum);
+//					System.out.println("&&&&&&& DDD");
+//					Utils.PrintArray(masterContext.getMasterData().getD());
 					double costtemp = Utils.calculateNorm( Utils.vectorAdd(masterContext.getMasterData().getD(), xsum) ); 
 					cost.add( costtemp * costtemp );
 					
@@ -146,7 +146,10 @@ public class EVADMMBsp extends BSP<NullWritable, NullWritable, IntWritable, Text
 						break;
 					}
 					
-					resultMasterList.add(new ResultMaster(peer.getPeerName(),k,0,masterContext.getu(),masterContext.getxMean(),masterContext.getXOptimal(),costvalue,slaveAverageOptimalValue, s_norm,r_norm, totalcost));
+					//resultMasterList.add(new ResultMaster(peer.getPeerName(),k,0,masterContext.getu(),masterContext.getxMean(),masterContext.getXOptimal(),costvalue,slaveAverageOptimalValue, s_norm,r_norm, totalcost));
+					
+					Runtime runtime = Runtime.getRuntime();
+					System.out.println ("Free memory : " + runtime.freeMemory() );
 
 				} catch (IloException e) {
 					// TODO Auto-generated catch block
@@ -184,6 +187,8 @@ public class EVADMMBsp extends BSP<NullWritable, NullWritable, IntWritable, Text
 		{	
 			boolean finish = false;
 			boolean isFirstIteration = true;
+			
+			
 			while(true)
 			{
 				peer.sync();
@@ -196,6 +201,8 @@ public class EVADMMBsp extends BSP<NullWritable, NullWritable, IntWritable, Text
 					
 				for(Integer evId: masterData.getEV()) {
 					peer.write(new IntWritable(1), new Text(EV_PATH + (evId +1) + ".mat"));
+					
+					slaveContext = null;
 					slaveContext = new SlaveContext(EV_PATH + (evId +1) + ".mat", 
 							masterData.getxMean(), 
 							masterData.getU(),
@@ -208,7 +215,7 @@ public class EVADMMBsp extends BSP<NullWritable, NullWritable, IntWritable, Text
 //						if(cost == 0)
 //							return;
 					
-						resultList.add(new Result(peer.getPeerName(),k,evId, slaveContext.getX(),masterData.getxMean(),masterData.getU(),slaveContext.getXOptimalSlave(),cost));
+						//resultList.add(new Result(peer.getPeerName(),k,evId, slaveContext.getX(),masterData.getxMean(),masterData.getU(),slaveContext.getXOptimalSlave(),cost));
 						
 						NetworkObjectSlave slave = new NetworkObjectSlave(slaveContext.getXOptimalSlave(), slaveContext.getCurrentEVNo(), slaveContext.getXOptimalDifference(), cost);
 						sendXOptimalToMaster(peer, slave);
@@ -255,17 +262,17 @@ public class EVADMMBsp extends BSP<NullWritable, NullWritable, IntWritable, Text
 	{	
 		double[] xMeanOld_xMean = Utils.calculateVectorSubtraction(xMean_old, xMean);
 		double[] result = Utils.addMatrixAndVector (xDifferenceMatrix, xMeanOld_xMean);
-		double[] s = Utils.scalerMultiply(result, -1*this.RHO*N);
+		double[] s = Utils.scalerMultiply(result, -1*EVADMMBsp.RHO*N);
 		s_norm= Utils.calculateNorm(s);
 		r_norm = Utils.calculateNorm(Utils.scaleVector(xMean, N));
 		
 		double cost_variance = 0;
-		System.out.println(">>>>COST ARRAY");
-		for(double d : cost)
-		{
-			System.out.print(d + "  ");
-		}
-		System.out.println();
+//		System.out.println(">>>>COST ARRAY");
+//		for(double d : cost)
+//		{
+//			System.out.print(d + "  ");
+//		}
+//		System.out.println();
 		
 		if(currentIteration < 5)
 			cost_variance = 1;
@@ -282,24 +289,24 @@ public class EVADMMBsp extends BSP<NullWritable, NullWritable, IntWritable, Text
 			List<Double> costLast5Elements = cost.subList(cost.size()-6, cost.size());
 			double[] last5 = ArrayUtils.toPrimitive(costLast5Elements.toArray(new Double[costLast5Elements.size()]));
 
-			System.out.println(">>>>> COST LAST 5 ARRAY: TOTAL ARRAY SIZE -> " + cost.size());
-			Utils.PrintArray(last5);
+			//System.out.println(">>>>> COST LAST 5 ARRAY: TOTAL ARRAY SIZE -> " + cost.size());
+			//Utils.PrintArray(last5);
 
 			cost_variance = Utils.getVariance(last5);
 			//cost_variance = Utils.calculateVariance(last5); 
-			System.out.println(">>>VARIANCE -> " + cost_variance);
+			//System.out.println(">>>VARIANCE -> " + cost_variance);
 		}
 
 		//eps_pri= sqrt(N*T)*1 + 1e-3 * max([norm(x), norm(x(:)- repmat(xmean,N,1))]);
 		double max = Math.max( Utils.calculateNorm(xMatrix), Utils.calculateNorm( Utils.addMatrixAndVector(xMatrix, Utils.scalerMultiply(xMean, -1))) );
 		
-		System.out.println("<><><> Norm X: " + Utils.calculateNorm(xMatrix) + "  Norm Second: " + Utils.calculateNorm( Utils.addMatrixAndVector(xMatrix, Utils.scalerMultiply(xMean, -1))));
+		//System.out.println("<><><> Norm X: " + Utils.calculateNorm(xMatrix) + "  Norm Second: " + Utils.calculateNorm( Utils.addMatrixAndVector(xMatrix, Utils.scalerMultiply(xMean, -1))));
 		double eps_pri = Math.sqrt(xMean.length * N) + (0.001 * max);
 		
 		//eps_dual= sqrt(N*T)*1 + 1e-3 *norm(rho*u);
 		double eps_dual = (Math.sqrt(xMean.length * N) * 1) + (0.001 * Utils.calculateNorm(Utils.scalerMultiply(u, EVADMMBsp.RHO)));
 		
-		Utils.PrintArray(u);
+		//Utils.PrintArray(u);
 		System.out.println("<><><>RHO: " +EVADMMBsp.RHO  + " R_NORM: " + r_norm + " -- eps_pri: " + eps_pri + " -- s_norm: " + s_norm + " -- eps_dual: " + eps_dual);
 		
 		if(r_norm <= eps_pri && s_norm <= eps_dual || (cost_variance <= 1e-9))
@@ -322,12 +329,12 @@ public class EVADMMBsp extends BSP<NullWritable, NullWritable, IntWritable, Text
 		double mu = 0.1;
 		double vold = v;
 		v = ((EVADMMBsp.RHO * (r_norm/s_norm)) -1);
-		System.out.println("<><><>RHO: " + EVADMMBsp.RHO * Math.exp( (lambda* v) + (mu*(v-vold)) ) );
+		//System.out.println("<><><>RHO: " + EVADMMBsp.RHO * Math.exp( (lambda* v) + (mu*(v-vold)) ) );
 		EVADMMBsp.RHO =  EVADMMBsp.RHO * Math.exp( (lambda* v) + (mu*(v-vold)) );
 		
 		masterContext.setRho(EVADMMBsp.RHO);
 				
-		System.out.println("<><<><><><<<>>>>> RHO: " + EVADMMBsp.RHO);
+		System.out.println("<><<><><><<<>>>>> New RHO: " + EVADMMBsp.RHO);
 		
 			//OLD RHO UPDATE	
 //		if(r_norm > 10* s_norm) {

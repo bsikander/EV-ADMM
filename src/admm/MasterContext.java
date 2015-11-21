@@ -59,8 +59,8 @@ public class MasterContext {
 	public double optimize(double[] xold,int iteration) throws IloException, FileNotFoundException
 	{	
 		IloCplex cplex = new IloCplex();
-		OutputStream out = new FileOutputStream("logfile_master");
-		cplex.setOut(out);
+		//OutputStream out = new FileOutputStream("logfile_master");
+		//cplex.setOut(out);
 		
 		IloNumVar[] x_n = cplex.numVarArray(masterData.getPrice().length, -60, 100000);
 		
@@ -90,7 +90,12 @@ public class MasterContext {
 		}
 		this.setXOptimal(x_optimal);
 		
-		return cplex.getObjValue();
+		double result = cplex.getObjValue();
+		cplex = null;
+		x_n = null;
+		exps = null;
+		
+		return result;
 	}
 	
 	private double[] subtractOldMeanU(double[] xold)

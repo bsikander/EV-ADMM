@@ -21,6 +21,11 @@ public class MasterDataValley {
 		return this.D;
 	}
 	
+	public void setD(double[] d)
+	{
+		this.D = d;
+	}
+	
 	public double getDelta()
 	{
 		return this.delta;

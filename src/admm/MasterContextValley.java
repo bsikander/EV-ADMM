@@ -41,6 +41,11 @@ public class MasterContextValley {
 		
 		xMean = Utils.getArrayWithData(getT(),0);
 		
+		
+		//D= D*N/1e5;  % Need to scale demand
+		masterData.setD( scaleD(masterData.getD(), N_EV + 1) );
+		
+		
 		//Xa_min and Xa_max
 //		double[] m = Utils.getArrayWithData(getT(),1);
 //		m = Utils.scalerMultiply(m, -100e3);
@@ -52,6 +57,21 @@ public class MasterContextValley {
 //		this.xa_max = m_max;
 		
 		
+	}
+	
+	private double[] scaleD(double[] D, double N)
+	{
+		double[] DNArray = Utils.scalerMultiply(D, N);
+		double[] temp = new double[DNArray.length];
+		
+		int index = 0;
+		for(double d : DNArray)
+		{
+			temp[index] = d/100000; // d/1e5
+			index++;
+		}
+		
+		return temp;
 	}
 	
 	public double optimize(double[] xold, int iteration) throws IloException, FileNotFoundException
@@ -122,6 +142,7 @@ public class MasterContextValley {
 	
 	private double[] subtractOldMeanUAnalytic(double[] xold)
 	{	
+		//xold - xmean + u
 		//xold = Utils.scalerMultiply(xold, -1);
 		double[] temp = Utils.vectorAdd(xold, Utils.scalerMultiply(this.xMean, -1));
 		double[] output = Utils.vectorAdd(temp, this.u);

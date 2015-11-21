@@ -35,12 +35,27 @@ import ilog.concert.*;
 import ilog.cplex.*;
 public class TestCPLEX {
 public static void main(String[] args) throws IloException, IOException {
-	double[][] matrixData = { {1d,2d,3d}, {4d,5d,6d}};
-	RealMatrix a = MatrixUtils.createRealMatrix(matrixData);
-	System.out.println(a.getNorm());
-	System.out.println(a.getFrobeniusNorm());
-	SingularValueDecomposition b = new SingularValueDecomposition(a);
-	System.out.println(b.getNorm());
+
+//	int i = 0;
+//	while(i < 10000000)
+//	{
+//		double[] tes1 = new double[100];
+//		String test = "abc" + i;
+//		float g = (float) (Math.random() * 100);
+//		System.out.println(test + "00> " + (g));
+//		i++;
+//	}
+//	System.out.println("testste");
+	long maxBytes = Runtime.getRuntime().maxMemory();
+	System.out.println("Max memory: " + maxBytes / 1024 / 1024 + "M");
+	
+	
+	//	double[][] matrixData = { {1d,2d,3d}, {4d,5d,6d}};
+//	RealMatrix a = MatrixUtils.createRealMatrix(matrixData);
+//	System.out.println(a.getNorm());
+//	System.out.println(a.getFrobeniusNorm());
+//	SingularValueDecomposition b = new SingularValueDecomposition(a);
+//	System.out.println(b.getNorm());
 	
 	//parseTxtFileToGenerateMatFiles();
 	//writeMasterFile();

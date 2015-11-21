@@ -1,13 +1,9 @@
 package admm;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.math.BigDecimal;
-import java.math.RoundingMode;
-import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
@@ -25,7 +21,6 @@ import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hama.bsp.BSPPeer;
 import org.codehaus.jackson.map.ObjectMapper;
-import org.mortbay.log.Log;
 
 import com.google.common.io.ByteStreams;
 import com.jmatio.io.MatFileReader;
@@ -162,6 +157,8 @@ public class Utils {
 											getSingleArrayFromDouble(x_optimal)
 											);
 			
+			matfilereader = null;
+			
 			return context;
 		}
 		catch(Exception e)
@@ -206,12 +203,16 @@ public class Utils {
 			
 			final File tempFile = File.createTempFile("saveTemp", ".tmp"); //Create a temp file
 			tempFile.deleteOnExit();
+			//tempFile.delete()
 			String tempPath = tempFile.getAbsolutePath(); //Get absolute path of temp file
 			
 			matfileWriter.write(tempPath, list); //Write to temp file
 			
 			FileSystem fs = getFSObject(conf);
 			fs.copyFromLocalFile(new Path(tempPath), new Path(filePath)); //Copy the temp file to HDFS
+			
+			tempFile.delete();
+			matfileWriter = null;
 			
 		}
 		catch(Exception e)
@@ -228,12 +229,19 @@ public class Utils {
 	public static File stream2file (InputStream in, String fileName) throws IOException {
         final File tempFile = File.createTempFile(fileName, ".tmp");
         tempFile.deleteOnExit();
-        try (FileOutputStream out = new FileOutputStream(tempFile)) {
+        
+        FileOutputStream out = new FileOutputStream(tempFile);
+        try {
             //IOUtils.copy(in, out);
         	ByteStreams.copy(in, out);
         }
         catch(Exception e) {
         	System.out.println("EXCEPTION stream2file -> " + e.getMessage());
+        }
+        finally
+        {
+        	out.close();
+        	out = null;
         }
         return tempFile;
     }
