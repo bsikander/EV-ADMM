@@ -4,6 +4,8 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
@@ -388,6 +390,19 @@ public class Utils {
 		return value;
 	}
 	
+	public static double roundDouble(double num, int decimalPlaces)
+	{
+//		double multiplier = 10.0 * (decimalPlaces-1);
+//		return Math.round (num * multiplier) / multiplier;
+//		int places = Constants.ROUND_PLACES;
+//	    if (places < 0) throw new IllegalArgumentException();
+
+	    BigDecimal bd = new BigDecimal(num);
+	    bd = bd.setScale(decimalPlaces, RoundingMode.HALF_UP);
+	    return bd.doubleValue();
+		//return value;
+	}
+	
 	public static double[] calculateSumOfEVOptimalValue(double[][] matrix)
 	{
 		double[] average = new double[matrix.length];
@@ -476,6 +491,7 @@ public class Utils {
 			{
 				sum = sum + evData[i][j];
 			}
+			//result[count] = Utils.roundDouble(sum, 4);
 			result[count] = sum;
 			count++;
 		}

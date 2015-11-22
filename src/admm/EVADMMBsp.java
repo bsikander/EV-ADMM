@@ -4,6 +4,7 @@ import ilog.concert.IloException;
 import ilog.cplex.IloCplex;
 
 import java.io.IOException;
+import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -99,12 +100,12 @@ public class EVADMMBsp extends BSP<NullWritable, NullWritable, IntWritable, Text
 					double totalcost = costvalue + result.cost();
 					//cost= norm(D+xsum)^2
 					
-//					System.out.println(">>>>>>>>>>> XSUMMM");
-//					Utils.PrintArray(xsum);
 //					System.out.println("&&&&&&& DDD");
 //					Utils.PrintArray(masterContext.getMasterData().getD());
-					double costtemp = Utils.calculateNorm( Utils.vectorAdd(masterContext.getMasterData().getD(), xsum) ); 
-					cost.add( costtemp * costtemp );
+					double costtemp = Utils.calculateNorm( Utils.vectorAdd(masterContext.getMasterData().getD(), xsum) );
+				    costtemp = Math.round ((costtemp * costtemp) * 1000.0) / 1000.0; //round off to 3 decimal places.
+				    cost.add(costtemp);
+					//cost.add( costtemp * costtemp );
 					
 					System.out.println(">>>>>> COST[" + k + "] -> " + cost.get(cost.size() -1));
 
@@ -144,6 +145,10 @@ public class EVADMMBsp extends BSP<NullWritable, NullWritable, IntWritable, Text
 					
 					if(converged == true) {
 						System.out.println("////////////Converged/////////");
+						System.out.println(">>>>>>>>>>> XSUMMM");
+						Utils.PrintArray(xsum);
+						System.out.println(">>>>>>> D"); 
+						Utils.PrintArray(masterContext.getMasterData().getD());
 						break;
 					}
 					

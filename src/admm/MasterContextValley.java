@@ -43,8 +43,7 @@ public class MasterContextValley {
 		
 		
 		//D= D*N/1e5;  % Need to scale demand
-		masterData.setD( scaleD(masterData.getD(), N_EV + 1) );
-		
+		masterData.setD( scaleD(masterData.getD(), N_EV + 1) ); 
 		
 		//Xa_min and Xa_max
 //		double[] m = Utils.getArrayWithData(getT(),1);
@@ -67,7 +66,7 @@ public class MasterContextValley {
 		int index = 0;
 		for(double d : DNArray)
 		{
-			temp[index] = d/100000; // d/1e5
+			temp[index] = Utils.roundDouble( d/100000 , 4); // d/1e5
 			index++;
 		}
 		
