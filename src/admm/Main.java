@@ -40,7 +40,7 @@ public class Main {
 		job.setJobName("EVADMM");
 	
 		job.set(Constants.EVADMM_MAX_ITERATIONS, "80");
-		job.set(Constants.EVADMM_EV_COUNT, "200");
+		job.set(Constants.EVADMM_EV_COUNT, "3");
 		job.set(Constants.EVADMM_OUTPUT_PATH, "/Users/raja/Documents/workspace/Hama-EVADMM/output/");
 		job.set(Constants.EVADMM_AGGREGATOR_PATH, "/Users/raja/Documents/Thesis/ADMM_matlab/Aggregator/aggregator.mat");
 		job.set(Constants.EVADMM_EV_PATH, "/Users/raja/Documents/Thesis/ADMM_matlab/Valley_Filling_1.1/Jose/EVs/home/");
@@ -69,7 +69,17 @@ public class Main {
 		job.setInputFormat(NullInputFormat.class);
 		job.setOutputPath(new Path(job.get(Constants.EVADMM_OUTPUT_PATH)));
 		System.out.println("Starting the job");
+		
+		long lStartTime = System.nanoTime();
+		
 		job.waitForCompletion(true);
+		
+		long lEndTime = System.nanoTime();
+		long difference = lEndTime - lStartTime;
+		long milliseconds = difference/1000000;
+		System.out.println("Elapsed milliseconds: " + milliseconds);
+		System.out.println("Elapsed milliseconds: " + milliseconds/1000);
+		
 		System.out.print("end");
 		}
 		catch(OutOfMemoryError e)

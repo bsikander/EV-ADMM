@@ -68,12 +68,13 @@ public class SlaveContext {
 		this.currentEVNo = currentEVNo;
 	}
 	
-	public double optimize() throws IloException, FileNotFoundException
+	public double optimize(IloCplex cplex) throws IloException, FileNotFoundException
 	{
-		IloCplex cplex = new IloCplex();
+		//IloCplex cplex = new IloCplex();
 		//OutputStream out = new FileOutputStream("logfile_slave");
 		//cplex.setOut(out);
 		//Ilo
+		cplex.clearModel();
 		cplex.setOut(null);
 		
 		IloNumVar[] x_i = new IloNumVar[x.length];
@@ -150,7 +151,7 @@ public class SlaveContext {
 			double result = cplex.getObjValue();
 			
 			//cplex = null;
-			cplex.end();
+			//cplex.end();
 			x_i = null;
 			exps = null;
 			AXExpEq = null;
@@ -205,7 +206,7 @@ public class SlaveContext {
 //			cplex.feasOpt(cplex., arg1)
 			
 			//cplex = null;
-			cplex.end();
+			//cplex.end();
 			x_i = null;
 			exps = null;
 			AXExpEq = null;
@@ -217,12 +218,13 @@ public class SlaveContext {
 	
 	private double[] subtractOldMeanU(double[] xold)
 	{
-//		xold = Utils.scalerMultiply(xold, -1);
-//		return Utils.vectorAdd(Utils.vectorAdd(xold, this.xMean),this.u);
-		
-		//K= xold - xmean - u;
 		xold = Utils.scalerMultiply(xold, -1);
 		return Utils.vectorAdd(Utils.vectorAdd(xold, this.xMean),this.u);
+		
+		//K= xold - xmean - u;
+//		this.xMean = Utils.scalerMultiply(this.xMean, -1);
+//		this.u = Utils.scalerMultiply(this.u, -1);
+//		return Utils.vectorAdd(Utils.vectorAdd(xold, this.xMean),this.u);
 	}
 	
 	public int getCurrentEVNo()

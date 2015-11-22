@@ -1,6 +1,7 @@
 package admm;
 
 import ilog.concert.IloException;
+import ilog.cplex.IloCplex;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -148,8 +149,8 @@ public class EVADMMBsp extends BSP<NullWritable, NullWritable, IntWritable, Text
 					
 					//resultMasterList.add(new ResultMaster(peer.getPeerName(),k,0,masterContext.getu(),masterContext.getxMean(),masterContext.getXOptimal(),costvalue,slaveAverageOptimalValue, s_norm,r_norm, totalcost));
 					
-					Runtime runtime = Runtime.getRuntime();
-					System.out.println ("Free memory : " + runtime.freeMemory() );
+//					Runtime runtime = Runtime.getRuntime();
+//					System.out.println ("Free memory : " + runtime.freeMemory() );
 
 				} catch (IloException e) {
 					// TODO Auto-generated catch block
@@ -187,7 +188,14 @@ public class EVADMMBsp extends BSP<NullWritable, NullWritable, IntWritable, Text
 		{	
 			boolean finish = false;
 			boolean isFirstIteration = true;
+			IloCplex cplex = null;
 			
+			try {
+				cplex = new IloCplex();
+			} catch (IloException e1) {
+				// TODO Auto-generated catch block
+				e1.printStackTrace();
+			}
 			
 			while(true)
 			{
@@ -211,7 +219,7 @@ public class EVADMMBsp extends BSP<NullWritable, NullWritable, IntWritable, Text
 					
 					try {
 						//Do optimization and write the x_optimal to mat file
-						double cost = slaveContext.optimize();
+						double cost = slaveContext.optimize(cplex);
 //						if(cost == 0)
 //							return;
 					
@@ -237,6 +245,8 @@ public class EVADMMBsp extends BSP<NullWritable, NullWritable, IntWritable, Text
 					break;
 				}
 			}
+			
+			cplex.end(); //clear the cplex object
 		}
 	}
 	
