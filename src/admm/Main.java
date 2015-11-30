@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.concurrent.TimeUnit;
 
 import org.apache.hadoop.conf.Configured;
 import org.apache.hadoop.fs.FSDataOutputStream;
@@ -78,7 +79,13 @@ public class Main {
 		long difference = lEndTime - lStartTime;
 		long milliseconds = difference/1000000;
 		System.out.println("Elapsed milliseconds: " + milliseconds);
-		System.out.println("Elapsed milliseconds: " + milliseconds/1000);
+		System.out.println("Elapsed seconds: " + milliseconds/1000);
+		System.out.println("Elapsed time: " + String.format("%02d:%02d:%02d", 
+			    TimeUnit.MILLISECONDS.toHours(milliseconds),
+			    TimeUnit.MILLISECONDS.toMinutes(milliseconds) - 
+			    TimeUnit.HOURS.toMinutes(TimeUnit.MILLISECONDS.toHours(milliseconds)),
+			    TimeUnit.MILLISECONDS.toSeconds(milliseconds) - 
+			    TimeUnit.MINUTES.toSeconds(TimeUnit.MILLISECONDS.toMinutes(milliseconds))));
 		
 		System.out.print("end");
 		}

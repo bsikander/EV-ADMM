@@ -49,7 +49,6 @@ public class EVADMMBsp extends BSP<NullWritable, NullWritable, IntWritable, Text
 		
 		if(peer.getPeerName().equals(this.masterTask)) //The master task
 		{	
-			//masterContext = new MasterContext(AGGREGATOR_PATH,EV_COUNT,RHO, peer.getConfiguration());
 			masterContext = new MasterContextValley(AGGREGATOR_PATH,EV_COUNT,RHO, peer.getConfiguration());
 			
 			xsum = new double[masterContext.getT()];
@@ -97,7 +96,8 @@ public class EVADMMBsp extends BSP<NullWritable, NullWritable, IntWritable, Text
 					
 					double[] masterXOptimalOld = masterContext.getXOptimal();
 					double[] oldXMean = masterContext.getxMean(); 
-					double costvalue = masterContext.optimize(masterContext.getXOptimal(),k);
+					masterContext.optimize(masterContext.getXOptimal(),k);
+					//double costvalue = masterContext.optimize(masterContext.getXOptimal(),k);
 					
 					//double totalcost = costvalue + result.cost();
 					//cost= norm(D+xsum)^2
