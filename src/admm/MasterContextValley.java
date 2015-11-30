@@ -74,17 +74,20 @@ public class MasterContextValley {
 	}
 	
 	public double optimize(double[] xold, int iteration) throws IloException, FileNotFoundException
-	{
-		//x= rho/(rho-2)* K - 2/(rho-2) * D;
-		double rhotemp = rho/(rho-2);
+	{	
+		//K= xold - xmean - u ;
+		//x= rho/(rho+2)* K + 2/(rho+2) * D;
+		
+		double rhotemp = rho/(rho+2);
 		double[] k = subtractOldMeanUAnalytic(xold);
 		
 		double[] rhoMultiplyK = Utils.scalerMultiply(k, rhotemp);
 		
 		double[] DMatrix = masterData.getD();
-		double[] rhoMultiplyD = Utils.scalerMultiply(DMatrix, (2/(rho-2)) );
+		double[] rhoMultiplyD = Utils.scalerMultiply(DMatrix, (2/(rho+2)) );
 		
-		this.setXOptimal( Utils.calculateVectorSubtraction(rhoMultiplyK, rhoMultiplyD ));
+		//this.setXOptimal( Utils.calculateVectorSubtraction(rhoMultiplyK, rhoMultiplyD ));
+		this.setXOptimal( Utils.vectorAdd(rhoMultiplyK, rhoMultiplyD ));
 		
 		//cost= norm(D-x)^2;
 		double cost = Utils.calculateNorm(Utils.vectorAdd(masterData.getD(), Utils.scalerMultiply(this.getXOptimal(), -1)));
@@ -144,7 +147,8 @@ public class MasterContextValley {
 		//xold - xmean + u
 		//xold = Utils.scalerMultiply(xold, -1);
 		double[] temp = Utils.vectorAdd(xold, Utils.scalerMultiply(this.xMean, -1));
-		double[] output = Utils.vectorAdd(temp, this.u);
+		//double[] output = Utils.vectorAdd(temp,this.u, -1);
+		double[] output = Utils.vectorAdd(temp,Utils.scalerMultiply(this.u, -1));
 		
 		return output;
 	}
