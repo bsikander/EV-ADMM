@@ -463,6 +463,15 @@ public class Utils {
 		
 		return subtractedMatrix;
 	}
+	
+	public static double[] calculateVectorSum(double[] vec1, double[] vec2) {
+		double[] sumMatrix = new double[vec1.length];
+		
+		for(int i=0; i< vec1.length; i++)
+			sumMatrix[i] = vec1[i] + vec2[i];
+		
+		return sumMatrix;
+	}
 
 	public static double[] addMatrixAndVector(double[][] mat, double[] vec)
 	{
