@@ -54,6 +54,12 @@ public class EVADMMBsp extends BSP<NullWritable, NullWritable, IntWritable, Text
 			xsum = new double[masterContext.getT()];
 			cost = new ArrayList<Double>();
 			
+			// Create a list of network object but only up to total peers -1 (excluding master)
+			// Set the u and xMean for each object
+			// For each peer, populate the EVs that it has to process
+			// In the end, send only one object per machine
+			List<NetworkObjectMaster> listOfNetworkMasterObjects = createMasterNetworkObjectList(peer);
+			
 			while(k != DEFAULT_ADMM_ITERATIONS_MAX)
 			{	
 				System.out.println();
@@ -63,25 +69,12 @@ public class EVADMMBsp extends BSP<NullWritable, NullWritable, IntWritable, Text
 				double[] slaveAverageOptimalValue = new double[masterContext.getT()]; //Moved up here to retain the value of old average of all the xoptimal
 				
 				try {
-					int currentEV = 0;
-					
-					//Create a list of network object but only upto total peers -1 (excluding master)
-					//Set the u and xMean for each object
-					//For each peer, populate the EVs that it has to process
-					//In the end, send only one object per machine
-					List<NetworkObjectMaster> listOfNetworkMasterObjects = new ArrayList<NetworkObjectMaster>();
-					for(int i=0; i < peer.getNumPeers() -1; i++) {
-						listOfNetworkMasterObjects.add(new NetworkObjectMaster(masterContext.getu(), masterContext.getxMean(), new ArrayList<Integer>(),masterContext.getMasterData().getDelta()));
-					}
-					
-					while(currentEV != masterContext.getN() - 1)
-					{	
-						listOfNetworkMasterObjects.get(currentEV % (peer.getNumPeers()-1)).addEV(currentEV);
-						currentEV++;
-					}
-					
 					int peerCount = 1;
 					for(NetworkObjectMaster obj : listOfNetworkMasterObjects) {
+						//Set new U and XMean for each peer object after each iteration
+						listOfNetworkMasterObjects.get(peerCount - 1).setU(masterContext.getu());
+						listOfNetworkMasterObjects.get(peerCount - 1).setxMean(masterContext.getxMean());
+						
 						sendxMeanAndUToSlaves(peer, obj, peer.getPeerName(peerCount));
 						peerCount++;
 					}
@@ -256,6 +249,27 @@ public class EVADMMBsp extends BSP<NullWritable, NullWritable, IntWritable, Text
 			
 			cplex.end(); //clear the cplex object
 		}
+	}
+
+	private List<NetworkObjectMaster>  createMasterNetworkObjectList(BSPPeer<NullWritable, NullWritable, IntWritable, Text, Text> peer) {
+		List<NetworkObjectMaster> listOfNetworkMasterObjects = new ArrayList<NetworkObjectMaster>();
+		int currentEV = 0;
+		
+		for(int i=0; i < peer.getNumPeers() -1; i++) {
+			listOfNetworkMasterObjects.add(
+					new NetworkObjectMaster(
+								null, 
+								null, 
+								new ArrayList<Integer>(),
+								masterContext.getMasterData().getDelta()));
+		}
+		
+		while(currentEV != masterContext.getN() - 1)
+		{	
+			listOfNetworkMasterObjects.get(currentEV % (peer.getNumPeers()-1)).addEV(currentEV);
+			currentEV++;
+		}
+		return listOfNetworkMasterObjects;
 	}
 	
 	@Override
