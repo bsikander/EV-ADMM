@@ -6,7 +6,9 @@ import ilog.cplex.IloCplex;
 import java.io.IOException;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.NullWritable;
@@ -97,7 +99,7 @@ public class EVADMMBsp extends BSP<NullWritable, NullWritable, IntWritable, Text
 					double[] oldXMean = masterContext.getxMean(); 
 					double costvalue = masterContext.optimize(masterContext.getXOptimal(),k);
 					
-					double totalcost = costvalue + result.cost();
+					//double totalcost = costvalue + result.cost();
 					//cost= norm(D+xsum)^2
 					
 //					System.out.println("&&&&&&& DDD");
@@ -202,6 +204,8 @@ public class EVADMMBsp extends BSP<NullWritable, NullWritable, IntWritable, Text
 				e1.printStackTrace();
 			}
 			
+			Map<Integer, double[]> optimalEVValues = new HashMap<Integer, double[]>(); // To store and override the optimal value of each EV
+			
 			while(true)
 			{
 				peer.sync();
@@ -220,15 +224,14 @@ public class EVADMMBsp extends BSP<NullWritable, NullWritable, IntWritable, Text
 							masterData.getxMean(), 
 							masterData.getU(),
 							evId,
-							RHO, isFirstIteration, peer, masterData.getDelta());
+							RHO, isFirstIteration, peer, masterData.getDelta(), optimalEVValues.get(evId + 1)); //Take old XOptimal value from the HashMap and send it to slaveContext
 					
 					try {
 						//Do optimization and write the x_optimal to mat file
 						double cost = slaveContext.optimize(cplex);
-//						if(cost == 0)
-//							return;
-					
-						//resultList.add(new Result(peer.getPeerName(),k,evId, slaveContext.getX(),masterData.getxMean(),masterData.getU(),slaveContext.getXOptimalSlave(),cost));
+						
+						optimalEVValues.put(evId + 1, slaveContext.getXOptimalSlave());
+						
 						
 						NetworkObjectSlave slave = new NetworkObjectSlave(slaveContext.getXOptimalSlave(), slaveContext.getCurrentEVNo(), slaveContext.getXOptimalDifference(), cost);
 						sendXOptimalToMaster(peer, slave);

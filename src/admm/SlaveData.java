@@ -7,9 +7,9 @@ public class SlaveData {
 	private double R;
 	private double[] Smax;
 	private double[] Smin;
-	private double[] x_optimal;
+	//private double[] x_optimal;
 	
-	public SlaveData(double[] d, double[] A, double[][] B, double R, double[] Smax, double[] Smin, double[] x_optimal)
+	public SlaveData(double[] d, double[] A, double[][] B, double R, double[] Smax, double[] Smin)//, double[] x_optimal)
 	{
 		this.d = d;
 		this.A = A;
@@ -17,7 +17,7 @@ public class SlaveData {
 		this.R = R;
 		this.Smax = Utils.scalerAdd(Smax, 0.0001);
 		this.Smin = Utils.scalerAdd(Smin, -0.0001);
-		this.x_optimal = x_optimal;
+		//this.x_optimal = x_optimal;
 	}
 	
 	public double[] getD() {
@@ -44,8 +44,8 @@ public class SlaveData {
 		return this.Smin;
 	}
 	
-	public double[] getXOptimal() {
-		return this.x_optimal;
-	}
+//	public double[] getXOptimal() {
+//		return this.x_optimal;
+//	}
  	
 }

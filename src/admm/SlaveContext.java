@@ -33,35 +33,41 @@ public class SlaveContext {
 	private double[] x_optimal;
 	private double[] x;
 	int currentEVNo;
-	private String evFileName;
+	//private String evFileName;
 	private boolean firstIteration = true;
 	private Configuration conf;
 	private double[] xOptimalDifference;
 	
-	public SlaveContext(String fileName, double[] xMean, double[] u, int currentEVNo, double rhoValue, boolean isFirstIteration, BSPPeer<NullWritable, NullWritable,IntWritable, Text, Text> peer, double delta) throws IOException
+	public SlaveContext(String fileName, double[] xMean, double[] u, int currentEVNo, double rhoValue, boolean isFirstIteration, BSPPeer<NullWritable, NullWritable,IntWritable, Text, Text> peer, double delta, double[] oldXOptimal) throws IOException
 	{	
 		firstIteration = isFirstIteration;
 		conf = peer.getConfiguration();
 		
 		slaveData = Utils.LoadSlaveDataFromMatFile(fileName, firstIteration, peer);
-		this.x = slaveData.getXOptimal(); //Read the last optimal value directly from the .mat file
-		x_optimal = new double[this.x.length];
+		//this.x = slaveData.getXOptimal(); //Read the last optimal value directly from the .mat file
+		
+//		this.x = oldXOptimal;
+//		x_optimal = new double[this.x.length];
 		
 		if(!isFirstIteration)
-			xOptimalDifference = slaveData.getXOptimal(); //Take the old value of optimal value from the mat file
+			//xOptimalDifference = slaveData.getXOptimal(); //Take the old value of optimal value from the mat file
+			//xOptimalDifference = oldXOptimal;
+			this.x = oldXOptimal;
 		else
-			xOptimalDifference = new double[slaveData.getXOptimal().length];
+			//xOptimalDifference = new double[slaveData.getXOptimal().length];
+			//xOptimalDifference = new double[oldXOptimal.length];
+			this.x = new double[u.length];
+		
+		//this.x = oldXOptimal;
+		x_optimal = new double[this.x.length];
 		
 		rho = rhoValue;
-		evFileName = fileName; 
+		//evFileName = fileName; 
 		
 		this.alpha = ((0.05/3600) * (15*60)) / delta;
-		//System.out.println("DELTA --> " + delta + "  ALPHA --> " + this.alpha);
 		
 		this.xi_max = Utils.scalerMultiply(this.slaveData.getD(), 4);
 		this.xi_min = Utils.scalerMultiply(this.slaveData.getD(), 0);
-//		this.xi_max = Utils.scalerMultiply(this.slaveData.getD(), 20);
-//		this.xi_min = Utils.scalerMultiply(this.slaveData.getD(), -20);
 		
 		this.xMean = xMean;
 		this.u = u;
@@ -77,14 +83,14 @@ public class SlaveContext {
 		cplex.clearModel();
 		cplex.setOut(null);
 		
-		IloNumVar[] x_i = new IloNumVar[x.length];
+		IloNumVar[] x_i = new IloNumVar[this.x.length];
 		
-		for(int i = 0; i < x.length ; i++) {
+		for(int i = 0; i < this.x.length ; i++) {
 			x_i[i] = cplex.numVar(xi_min[i], xi_max[i]);
 		}
 		
 	    double gammaAlpha = this.gamma * this.alpha;
-		double[] data = subtractOldMeanU(x);
+		double[] data = subtractOldMeanU(this.x);
 		
 		IloNumExpr[] exps = new IloNumExpr[data.length];
 		
@@ -141,10 +147,12 @@ public class SlaveContext {
 			//Utils.PrintArray(x_optimal);
 			
 			//Calculate x_i^k - x_i^k-1
-			xOptimalDifference = Utils.calculateVectorSubtraction(x_optimal, xOptimalDifference);
+			//xOptimalDifference = Utils.calculateVectorSubtraction(x_optimal, xOptimalDifference);
+			xOptimalDifference = Utils.calculateVectorSubtraction(x_optimal, this.x);
 			
 			//Write the x_optimal to mat file
-			Utils.SlaveXToMatFile(evFileName, x_optimal, conf);
+			//Updated: Don't write to harddrive, it is very expensive.
+			//Utils.SlaveXToMatFile(evFileName, x_optimal, conf);
 			
 			//TODO: Print -Remove
 	//		System.out.println("$$$$$$$$$$////////// Cost Value ////// + " + cplex.getObjValue());

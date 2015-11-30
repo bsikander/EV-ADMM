@@ -133,21 +133,21 @@ public class Utils {
 			double[][] SmaxArray = ((MLDouble)matfilereader.getMLArray("S_max")).getArray(); //Conversion
 			double[][] SminArray = ((MLDouble)matfilereader.getMLArray("S_min")).getArray(); //Conversion
 			
-			double[][] x_optimal = new double[dArray[0].length][1];
-			if(matfilereader.getMLArray("x_optimal") == null || isFirstIteration == true) {
-				peer.write(new IntWritable(1), new Text("X_OTIMAL NOT FOUND .. WRITING ZERO"));
-				for(int i=0; i< dArray[0].length;i++) {
-					x_optimal[i][0] = 0;
-				}
-			}
-			else {
-				x_optimal = ((MLDouble)matfilereader.getMLArray("x_optimal")).getArray(); //Conversion
-				
-				peer.write(new IntWritable(1), new Text("X_OPTIMAL FOUND"));
-				//Utils.PrintArray(getSingleArrayFromDouble(x_optimal));
-			}
-			
-			peer.write(new IntWritable(1), new Text(Utils.convertDoubleArrayToString(getSingleArrayFromDouble(x_optimal))));
+//			double[][] x_optimal = new double[dArray[0].length][1];
+//			if(matfilereader.getMLArray("x_optimal") == null || isFirstIteration == true) {
+//				peer.write(new IntWritable(1), new Text("X_OTIMAL NOT FOUND .. WRITING ZERO"));
+//				for(int i=0; i< dArray[0].length;i++) {
+//					x_optimal[i][0] = 0;
+//				}
+//			}
+//			else {
+//				x_optimal = ((MLDouble)matfilereader.getMLArray("x_optimal")).getArray(); //Conversion
+//				
+//				peer.write(new IntWritable(1), new Text("X_OPTIMAL FOUND"));
+//				//Utils.PrintArray(getSingleArrayFromDouble(x_optimal));
+//			}
+//			
+//			peer.write(new IntWritable(1), new Text(Utils.convertDoubleArrayToString(getSingleArrayFromDouble(x_optimal))));
 			
 			SlaveData context = new SlaveData(
 											dArray[0], 
@@ -155,8 +155,8 @@ public class Utils {
 											BArray, 
 											RArray[0][0],
 											getSingleArrayFromDouble(SmaxArray),
-											getSingleArrayFromDouble(SminArray),
-											getSingleArrayFromDouble(x_optimal)
+											getSingleArrayFromDouble(SminArray)
+											//getSingleArrayFromDouble(x_optimal)
 											);
 			
 			matfilereader = null;

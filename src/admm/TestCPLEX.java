@@ -288,7 +288,7 @@ public static SlaveData LoadSlaveDataFromMatFile(String filePath) throws IOExcep
 										BArray, 
 										RArray[0][0],
 										Utils.getSingleArrayFromDouble(SmaxArray),
-										Utils.getSingleArrayFromDouble(SminArray), null
+										Utils.getSingleArrayFromDouble(SminArray)
 										//Utils.getSingleArrayFromDouble(x_optimal)
 										);
 		
