@@ -13,6 +13,9 @@ import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hama.bsp.BSPPeer;
 
+/*
+ * This class loads the data for an EV and solves its model. An object of this class is created for each EV in each iteration.
+ */
 public class SlaveContext {
 	double[] x_salve;
 	private double gamma = 0;
@@ -26,35 +29,25 @@ public class SlaveContext {
 	private double[] x_optimal;
 	private double[] x;
 	int currentEVNo;
-	private boolean firstIteration = true;
-	private Configuration conf;
 	private double[] xOptimalDifference;
 	
+	/*
+	 * The default constructor which loads the EV from file system.
+	 */
 	public SlaveContext(String fileName, double[] xMean, double[] u, int currentEVNo, double rhoValue, boolean isFirstIteration, BSPPeer<NullWritable, NullWritable,IntWritable, Text, Text> peer, double delta, double[] oldXOptimal) throws IOException
 	{	
-		firstIteration = isFirstIteration;
-		conf = peer.getConfiguration();
+		//firstIteration = isFirstIteration;
+		//conf = peer.getConfiguration();
 		
-		slaveData = Utils.LoadSlaveDataFromMatFile(fileName, firstIteration, peer);
-		//this.x = slaveData.getXOptimal(); //Read the last optimal value directly from the .mat file
-		
-//		this.x = oldXOptimal;
-//		x_optimal = new double[this.x.length];
+		slaveData = Utils.LoadSlaveDataFromMatFile(fileName, peer);
 		
 		if(!isFirstIteration)
-			//xOptimalDifference = slaveData.getXOptimal(); //Take the old value of optimal value from the mat file
-			//xOptimalDifference = oldXOptimal;
 			this.x = oldXOptimal;
 		else
-			//xOptimalDifference = new double[slaveData.getXOptimal().length];
-			//xOptimalDifference = new double[oldXOptimal.length];
 			this.x = new double[u.length];
 		
-		//this.x = oldXOptimal;
 		x_optimal = new double[this.x.length];
-		
 		rho = rhoValue;
-		//evFileName = fileName; 
 		
 		this.alpha = ((0.05/3600) * (15*60)) / delta;
 		
@@ -66,11 +59,13 @@ public class SlaveContext {
 		this.currentEVNo = currentEVNo;
 	}
 	
+	/*
+	 * This function solves the model using IBM CPLEX and returns the cost. The key for a sucessful long run is that you donot
+	 * create the CPLEX instances again and again because the objects are not cleaned up by GC. So, always use clearModel to
+	 * clear out the old model and create a new one and reuse the same cplex object again and again.
+	 */
 	public double optimize(IloCplex cplex) throws IloException, FileNotFoundException
-	{
-		//IloCplex cplex = new IloCplex();
-		//OutputStream out = new FileOutputStream("logfile_slave");
-		//cplex.setOut(out);
+	{	
 		cplex.clearModel();
 		cplex.setOut(null);
 		
@@ -133,7 +128,6 @@ public class SlaveContext {
 			}
 			
 			//Calculate x_i^k - x_i^k-1
-			//xOptimalDifference = Utils.calculateVectorSubtraction(x_optimal, xOptimalDifference);
 			xOptimalDifference = Utils.calculateVectorSubtraction(x_optimal, this.x);
 			
 			//Write the x_optimal to mat file
@@ -169,68 +163,97 @@ public class SlaveContext {
 		}
 	}
 	
-	
+	/*
+	 * This function calculates -xold + xMean + u
+	 */
 	private double[] subtractOldMeanU(double[] xold)
 	{
 		xold = Utils.scalerMultiply(xold, -1);
 		return Utils.vectorAdd(Utils.vectorAdd(xold, this.xMean),this.u);
-		
-		//K= xold - xmean - u;
-//		this.xMean = Utils.scalerMultiply(this.xMean, -1);
-//		this.u = Utils.scalerMultiply(this.u, -1);
-//		return Utils.vectorAdd(Utils.vectorAdd(xold, this.xMean),this.u);
 	}
 	
+	/*
+	 * Getter to access the current EV being processed.
+	 */
 	public int getCurrentEVNo()
 	{
 		return this.currentEVNo;
 	}
 	
+	/*
+	 * Getter for accessing xOptimal.
+	 */
 	public double[] getXOptimalSlave()
 	{
 		return this.x_optimal;
 	}
 	
+	/*
+	 * Getter to access the alpha.
+	 */
 	public double getAlpha()
 	{
 		return this.alpha;
 	}
 	
+	/*
+	 * Getter to access the difference of old optimal value and current optimal value (x_old* - x*)
+	 */
 	public double[] getXOptimalDifference() {
 		return this.xOptimalDifference;
 	}
 	
-	
+	/*
+	 * Getter to access the xi_max.
+	 */
 	public double[] getXimax()
 	{
 		return this.xi_max;
 	}
 	
+	/*
+	 * Getter to access the xi_min.
+	 */
 	public double[] getXimin()
 	{
 		return this.xi_min;
 	}
 	
+	/*
+	 * Setter to set u.
+	 */
 	public void setU(double[] u)
 	{
 		this.u = u;
 	}
 	
+	/*
+	 * Setter to set xMean.
+	 */
 	public void setXMean(double[] xmean)
 	{
 		this.xMean = xmean;
 	}
 	
+	/*
+	 * Getter for u.
+	 */
 	public double[] getU()
 	{
 		return this.u;
 	}
 	
+	/*
+	 * Getter for xMean.
+	 */
 	public double[] getXMean()
 	{
 		return this.xMean;
 	}
 	
+	/*
+	 * Getter for x.
+	 */
 	public double[] getX()
 	{
 		return this.x;

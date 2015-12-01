@@ -114,7 +114,7 @@ public class Utils {
 		return tempMatFile;
 	}
 	
-	public static SlaveData LoadSlaveDataFromMatFile(String filePath, boolean isFirstIteration, BSPPeer<NullWritable, NullWritable,IntWritable, Text, Text> peer) throws IOException
+	public static SlaveData LoadSlaveDataFromMatFile(String filePath, BSPPeer<NullWritable, NullWritable,IntWritable, Text, Text> peer) throws IOException
 	{
 		File tempMatFile = null;
 		try
