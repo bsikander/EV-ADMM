@@ -4,14 +4,43 @@ import java.io.FileNotFoundException;
 import org.apache.hadoop.conf.Configuration;
 import ilog.concert.IloException;
 
+/*
+ * This class is responsible for loading the data and solving the master model.
+ */
 public class MasterContextValley {
+	/*
+	 *  Total EVs
+	 */
 	private int N_EV;
+	
+	/*
+	 *  Current RHO value
+	 */
 	private double rho;
+	
+	/*
+	 *  Time Interval
+	 */
 	private int T;
+	
+	/*
+	 *  After loading the Aggregator data, everything is populated in this object. 
+	 */
 	private MasterDataValley masterData;
+	
+	/*
+	 * Stores the current xMean value.
+	 */
 	private double[] xMean;
+	
+	/*
+	 * Stores the current x* value of master
+	 */
 	private double[] x_optimal;
 	
+	/*
+	 * Stores the current u
+	 */
 	private double[] u;
 	
 	/*
@@ -31,24 +60,6 @@ public class MasterContextValley {
 		
 		//D= D*N/1e5;  % Need to scale demand
 		masterData.setD( scaleD(masterData.getD(), N_EV + 1) );
-	}
-	
-	/*
-	 * This function scales the Demand parameter of Aggregator based on the total EVs.
-	 */
-	private double[] scaleD(double[] D, double N)
-	{
-		double[] DNArray = Utils.scalerMultiply(D, N);
-		double[] temp = new double[DNArray.length];
-		
-		int index = 0;
-		for(double d : DNArray)
-		{
-			temp[index] = Utils.roundDouble( d/100000 , 4); // d/1e5
-			index++;
-		}
-		
-		return temp;
 	}
 	
 	/*
@@ -74,6 +85,24 @@ public class MasterContextValley {
 		double cost = Utils.calculateNorm(Utils.vectorAdd(masterData.getD(), Utils.scalerMultiply(this.getXOptimal(), -1)));
 
 		return cost*cost;
+	}
+	
+	/*
+	 * This function scales the Demand parameter of Aggregator based on the total EVs.
+	 */
+	private double[] scaleD(double[] D, double N)
+	{
+		double[] DNArray = Utils.scalerMultiply(D, N);
+		double[] temp = new double[DNArray.length];
+		
+		int index = 0;
+		for(double d : DNArray)
+		{
+			temp[index] = Utils.roundDouble( d/100000 , 4); // d/1e5
+			index++;
+		}
+		
+		return temp;
 	}
 	
 	/*
