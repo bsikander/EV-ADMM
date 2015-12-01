@@ -1,25 +1,20 @@
 package admm;
 
-import java.io.File;
 import java.io.IOException;
-import java.io.OutputStream;
-import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.concurrent.TimeUnit;
 
-import org.apache.hadoop.conf.Configured;
-import org.apache.hadoop.fs.FSDataOutputStream;
-import org.apache.hadoop.fs.FileStatus;
-import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hama.HamaConfiguration;
 import org.apache.hama.bsp.BSPJob;
 import org.apache.hama.bsp.BSPJobClient;
 import org.apache.hama.bsp.ClusterStatus;
-import org.apache.hama.bsp.FileInputFormat;
 import org.apache.hama.bsp.NullInputFormat;
-import org.apache.hama.bsp.TextInputFormat;
 
+/*
+ * The main entry point of the algorithm. This function takes multiple command line arguments to change the behavior of the algorithm.
+ * It also starts the BSP class.
+ */
 public class Main {
 	public static void main(String[] args) throws IOException, InterruptedException, ClassNotFoundException, URISyntaxException {		
 		
@@ -41,12 +36,12 @@ public class Main {
 		job.setJobName("EVADMM");
 	
 		job.set(Constants.EVADMM_MAX_ITERATIONS, "60");
-		job.set(Constants.EVADMM_EV_COUNT, "100");
+		job.set(Constants.EVADMM_EV_COUNT, "10");
 		job.set(Constants.EVADMM_OUTPUT_PATH, "/Users/raja/Documents/workspace/Hama-EVADMM/output/");
 		job.set(Constants.EVADMM_AGGREGATOR_PATH, "/Users/raja/Documents/Thesis/ADMM_matlab/Aggregator/aggregator.mat");
 		job.set(Constants.EVADMM_EV_PATH, "/Users/raja/Documents/Thesis/ADMM_matlab/Valley_Filling_1.1/Jose/EVs/home/");
 		job.set(Constants.EVADMM_RHO, "0.01");
-		job.set(Constants.EVADMM_BSP_TASK, "2");
+		job.set(Constants.EVADMM_BSP_TASK, "12");
 		
 		if(args.length >=7)
 			job.set(Constants.EVADMM_RHO, args[6]);
@@ -96,6 +91,9 @@ public class Main {
 		}
 	}
 	
+	/*
+	 * In case user is not using the command line parameters properly. This function prints the correct usage information.
+	 */
 	private static void printUsage() {
 	    System.out.println("Usage: <input_aggregator> <input_ev> <output> "
 	        + "[maximum iterations (default 4)] [ev count (default 4)] [bsp tasks (default 2)] [rho (default 0.01)]");

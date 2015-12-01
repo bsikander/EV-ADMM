@@ -17,13 +17,9 @@ import gurobi.*;
 
 public class MasterContextValley {
 	private int N_EV;
-	//private String chargeStrategy = "home";
+
 	private double rho;
 	private int T;
-//	private double eps_pri;
-//	private double eps_dual;
-//	private double[] xa_min;
-//	private double[] xa_max;
 	private MasterDataValley masterData;
 	private double[] xMean;
 	private double[] x_optimal;
