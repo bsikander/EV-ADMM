@@ -6,13 +6,14 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-
-//import org.apache.commons.math3.linear.RealMatrix;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.io.Writable;
 import org.codehaus.jackson.annotate.JsonProperty;
 import org.codehaus.jackson.map.ObjectMapper;
 
+/*
+ * This class is responsible for serializing and deserializing the data that master sends to slaves using the Jackson library.
+ */
 public class NetworkObjectMaster implements Writable {
 	private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 	
@@ -28,14 +29,19 @@ public class NetworkObjectMaster implements Writable {
 	@JsonProperty("delta")
 	private double delta;
 	
-	
+	/*
+	 * Default constructor of the class.
+	 */
 	public NetworkObjectMaster()
 	{
 		EVs = new ArrayList<Integer>();
 	}
 	
+	/*
+	 * Parameterized constructor
+	 */
 	public NetworkObjectMaster(double[] u, double[] xMean, List<Integer> EVs, double delta)
-	{
+	{	
 		this.u = u;
 		this.xMean = xMean;	
 		this.EVs = EVs;
@@ -86,9 +92,7 @@ public class NetworkObjectMaster implements Writable {
 	{
 		return this.delta;
 	}
-	
-
-	
+		
 	public void setU(double[] value)
 	{
 		this.u = value;
