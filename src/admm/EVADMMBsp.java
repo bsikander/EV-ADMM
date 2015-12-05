@@ -417,7 +417,8 @@ public class EVADMMBsp extends BSP<NullWritable, NullWritable, IntWritable, Text
 		Text receivedJson;
 		
 		double[][] s = new double[this.masterContext.getXOptimal().length][totalN];
-		double[] averageXReceived = Utils.getZeroArray(this.masterContext.getXOptimal().length);
+		//double[] averageXReceived = Utils.getZeroArray(this.masterContext.getXOptimal().length);
+		double[] averageXReceived = new double[this.masterContext.getXOptimal().length];
 		double[][] allOptimalSlaveXReceived = new double[this.masterContext.getXOptimal().length][totalN];
 		
 		int ev = 0;
