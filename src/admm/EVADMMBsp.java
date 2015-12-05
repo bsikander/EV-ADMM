@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.hadoop.io.IntWritable;
+import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hama.bsp.BSP;
@@ -15,10 +16,11 @@ import org.apache.hama.bsp.sync.SyncException;
 import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+
 import ilog.concert.IloException;
 import ilog.cplex.IloCplex;
 
-public class EVADMMBsp extends BSP<NullWritable, NullWritable, IntWritable, Text, Text>{
+public class EVADMMBsp extends BSP<LongWritable, Text, IntWritable, Text, Text>{
 	public static final Log LOG = LogFactory.getLog(EVADMMBsp.class);
 	
 	/*
@@ -77,7 +79,7 @@ public class EVADMMBsp extends BSP<NullWritable, NullWritable, IntWritable, Text
 	 * @see org.apache.hama.bsp.BSP#bsp(org.apache.hama.bsp.BSPPeer)
 	 */
 	@Override
-	public void bsp(BSPPeer<NullWritable, NullWritable,IntWritable, Text, Text> peer) throws IOException, SyncException, InterruptedException {
+	public void bsp(BSPPeer<LongWritable, Text,IntWritable, Text, Text> peer) throws IOException, SyncException, InterruptedException {
 		int k = 0;
 		
 		if(peer.getPeerName().equals(this.masterTask)) //The master task
@@ -218,6 +220,17 @@ public class EVADMMBsp extends BSP<NullWritable, NullWritable, IntWritable, Text
 			
 			Map<Integer, double[]> optimalEVValues = new HashMap<Integer, double[]>(); // To store and override the optimal value of each EV
 			
+//			LongWritable key = new LongWritable();
+//			Text value = new Text();
+//			
+//			LOG.info("Slave: Read the input data");
+//			//Read each input
+//			int i = 0;
+//		
+//			while(peer.readNext(key, value) != false) {
+//				slaveContext.getXUpdate(value.toString(),i);
+//			}
+			
 			while(true)
 			{
 				peer.sync();
@@ -276,7 +289,7 @@ public class EVADMMBsp extends BSP<NullWritable, NullWritable, IntWritable, Text
 	 */
 	@Override
     public void cleanup(
-        BSPPeer<NullWritable, NullWritable, IntWritable, Text, Text> peer)
+        BSPPeer<LongWritable, Text, IntWritable, Text, Text> peer)
         throws IOException {
 		System.out.println(peer.getPeerName() + " is shutting down");
       }
@@ -286,7 +299,7 @@ public class EVADMMBsp extends BSP<NullWritable, NullWritable, IntWritable, Text
 	 * @see org.apache.hama.bsp.BSP#setup(org.apache.hama.bsp.BSPPeer)
 	 */
 	@Override
-    public void setup(BSPPeer<NullWritable, NullWritable, IntWritable, Text, Text> peer) throws IOException, SyncException, InterruptedException {
+    public void setup(BSPPeer<LongWritable, Text, IntWritable, Text, Text> peer) throws IOException, SyncException, InterruptedException {
 		this.masterTask = peer.getPeerName(0); //0 is our master
 		
 		AGGREGATOR_PATH = peer.getConfiguration().get(Constants.EVADMM_AGGREGATOR_PATH);
@@ -301,7 +314,7 @@ public class EVADMMBsp extends BSP<NullWritable, NullWritable, IntWritable, Text
 	 * the EV Id array and delta before the start of iterations. The object returned is used in each iteration
 	 * to send the data to each peer.
 	 */
-	private List<NetworkObjectMaster>  createMasterNetworkObjectList(BSPPeer<NullWritable, NullWritable, IntWritable, Text, Text> peer) {
+	private List<NetworkObjectMaster>  createMasterNetworkObjectList(BSPPeer<LongWritable, Text, IntWritable, Text, Text> peer) {
 		List<NetworkObjectMaster> listOfNetworkMasterObjects = new ArrayList<NetworkObjectMaster>();
 		int currentEV = 0;
 		
@@ -381,7 +394,7 @@ public class EVADMMBsp extends BSP<NullWritable, NullWritable, IntWritable, Text
 	 * This function is used to stop the code on all nodes. If the convergence criteria is met or total iterations have
 	 * been fulfilled then a message is sent to all the peers to stop the code.
 	 */
-	private void sendFinishMessage(BSPPeer<NullWritable, NullWritable, IntWritable, Text, Text> peer) throws IOException
+	private void sendFinishMessage(BSPPeer<LongWritable, Text, IntWritable, Text, Text> peer) throws IOException
 	{
 		for(String peerName: peer.getAllPeerNames()) {
 			if(!peerName.equals(this.masterTask)) {
@@ -393,7 +406,7 @@ public class EVADMMBsp extends BSP<NullWritable, NullWritable, IntWritable, Text
 	/*
 	 * This function is responsible for sending the latest xMean and U to all the slaves.
 	 */
-	private void sendxMeanAndUToSlaves(BSPPeer<NullWritable, NullWritable, IntWritable, Text, Text> peer, NetworkObjectMaster object, String peerName) throws IOException
+	private void sendxMeanAndUToSlaves(BSPPeer<LongWritable, Text, IntWritable, Text, Text> peer, NetworkObjectMaster object, String peerName) throws IOException
 	{
 		peer.send(peerName, new Text(Utils.networkMasterToJson(object)));
 	}
@@ -401,7 +414,7 @@ public class EVADMMBsp extends BSP<NullWritable, NullWritable, IntWritable, Text
 	/*
 	 * This function is used by all the slaves to send the latest xOptimal value to master.
 	 */
-	private void sendXOptimalToMaster(BSPPeer<NullWritable, NullWritable, IntWritable, Text, Text> peer, NetworkObjectSlave object) throws IOException
+	private void sendXOptimalToMaster(BSPPeer<LongWritable, Text, IntWritable, Text, Text> peer, NetworkObjectSlave object) throws IOException
 	{	
 		peer.send(this.masterTask, new Text(Utils.networkSlaveToJson(object)));
 	}
@@ -411,7 +424,7 @@ public class EVADMMBsp extends BSP<NullWritable, NullWritable, IntWritable, Text
 	 * values in a double array and this array is used to check the convergence. It also averages all the received 
 	 * optimal value, adds up all the costs and stores all the difference of x_old* and x*.
 	 */
-	private Pair<double[],double[][], Double, double[][]> receiveSlaveOptimalValuesAndUpdateX(BSPPeer<NullWritable, NullWritable, IntWritable, Text, Text> peer, int totalN) throws IOException
+	private Pair<double[],double[][], Double, double[][]> receiveSlaveOptimalValuesAndUpdateX(BSPPeer<LongWritable, Text, IntWritable, Text, Text> peer, int totalN) throws IOException
 	{
 		NetworkObjectSlave slave;
 		Text receivedJson;
@@ -465,7 +478,7 @@ public class EVADMMBsp extends BSP<NullWritable, NullWritable, IntWritable, Text
 	/*
 	 * This function is responsible for receiving data at slave which is sent by the master.
 	 */
-	private NetworkObjectMaster receiveMasterUAndXMeanList(BSPPeer<NullWritable, NullWritable, IntWritable, Text, Text> peer) throws IOException
+	private NetworkObjectMaster receiveMasterUAndXMeanList(BSPPeer<LongWritable, Text, IntWritable, Text, Text> peer) throws IOException
 	{
 		NetworkObjectMaster master = new NetworkObjectMaster();
 		Text receivedJson;

@@ -2,13 +2,16 @@ package admm;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
+
 import ilog.concert.IloException;
 import ilog.concert.IloNumExpr;
 import ilog.concert.IloNumVar;
 import ilog.cplex.IloCplex;
 import ilog.cplex.IloCplex.CplexStatus;
+
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.io.IntWritable;
+import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hama.bsp.BSPPeer;
@@ -34,7 +37,7 @@ public class SlaveContext {
 	/*
 	 * The default constructor which loads the EV from file system.
 	 */
-	public SlaveContext(String fileName, double[] xMean, double[] u, int currentEVNo, double rhoValue, boolean isFirstIteration, BSPPeer<NullWritable, NullWritable,IntWritable, Text, Text> peer, double delta, double[] oldXOptimal) throws IOException
+	public SlaveContext(String fileName, double[] xMean, double[] u, int currentEVNo, double rhoValue, boolean isFirstIteration, BSPPeer<LongWritable, Text,IntWritable, Text, Text> peer, double delta, double[] oldXOptimal) throws IOException
 	{	
 		//firstIteration = isFirstIteration;
 		//conf = peer.getConfiguration();
