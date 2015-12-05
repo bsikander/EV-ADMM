@@ -97,9 +97,9 @@ public class EVADMMBsp extends BSP<LongWritable, Text, IntWritable, Text, Text>{
 			
 			while(k != DEFAULT_ADMM_ITERATIONS_MAX)
 			{	
-				System.out.println();
-				System.out.println("--------> " + (k +1) + " <--------");
-				System.out.println();
+				//System.out.println();
+				//System.out.println("--------> " + (k +1) + " <--------");
+				//System.out.println();
 				
 				double[] slaveAverageOptimalValue = new double[masterContext.getT()]; //Moved up here to retain the value of old average of all the xoptimal
 				
@@ -137,7 +137,7 @@ public class EVADMMBsp extends BSP<LongWritable, Text, IntWritable, Text, Text>{
 				    cost.add(costtemp);
 					//cost.add( costtemp * costtemp );
 					
-					System.out.println(">>>>>> COST[" + k + "] -> " + cost.get(cost.size() -1)); 
+					System.out.print((k+1) + " > COST[" + (k +1) + "] -> " + cost.get(cost.size() -1) + " -- "); 
 
 					masterContext.setXMean(Utils.calculateMean(masterContext.getXOptimal(), slaveAverageOptimalValue, masterContext.getN())); 	//Take Mean
 					masterContext.setU(Utils.vectorAdd(masterContext.getu(), masterContext.getxMean())); //Update u
@@ -373,7 +373,8 @@ public class EVADMMBsp extends BSP<LongWritable, Text, IntWritable, Text, Text>{
 		double eps_dual = (Math.sqrt(xMean.length * N) * 1) + (0.001 * Utils.calculateNorm(Utils.scalerMultiply(u, EVADMMBsp.RHO)));
 		
 		//Utils.PrintArray(u);
-		System.out.println("<><><>RHO: " +EVADMMBsp.RHO  + " R_NORM: " + r_norm + " -- eps_pri: " + eps_pri + " -- s_norm: " + s_norm + " -- eps_dual: " + eps_dual);
+		System.out.print("RHO: " +EVADMMBsp.RHO  + " R_NORM: " + r_norm + " -- eps_pri: " + eps_pri + " -- s_norm: " + s_norm + " -- eps_dual: " + eps_dual);
+		System.out.println("");
 		
 		if(r_norm <= eps_pri && s_norm <= eps_dual || (cost_variance <= 1e-9))
 			return true;
@@ -386,7 +387,7 @@ public class EVADMMBsp extends BSP<LongWritable, Text, IntWritable, Text, Text>{
 		
 		masterContext.setRho(EVADMMBsp.RHO);
 				
-		System.out.println("<><<><><><<<>>>>> New RHO: " + EVADMMBsp.RHO);
+		//System.out.println("<><<><><><<<>>>>> New RHO: " + EVADMMBsp.RHO);
 		
 		return false;
 	}
