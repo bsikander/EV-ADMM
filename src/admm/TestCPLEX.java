@@ -36,6 +36,8 @@ import ilog.cplex.*;
 public class TestCPLEX {
 public static void main(String[] args) throws IloException, IOException {
 
+	writeSlaveFileWithoutFramework();
+	System.out.println("END");;
 //	int i = 0;
 //	while(i < 10000000)
 //	{
@@ -46,8 +48,8 @@ public static void main(String[] args) throws IloException, IOException {
 //		i++;
 //	}
 //	System.out.println("testste");
-	long maxBytes = Runtime.getRuntime().maxMemory();
-	System.out.println("Max memory: " + maxBytes / 1024 / 1024 + "M");
+//	long maxBytes = Runtime.getRuntime().maxMemory();
+//	System.out.println("Max memory: " + maxBytes / 1024 / 1024 + "M");
 	
 	
 	//	double[][] matrixData = { {1d,2d,3d}, {4d,5d,6d}};
@@ -160,6 +162,59 @@ private static void writeSlaveFile() throws IOException {
 	}
 	writeFile(data,"EVs.txt");
 }
+
+private static void writeSlaveFileWithoutFramework() throws IOException {
+	SlaveData sdata;
+	String data = "";
+	//xi_max,xi_min,A,R_value,gamma,alpha,rho,smax,smin,B
+	for(int i =1; i <= 10; i++) {
+		 sdata = LoadSlaveDataFromMatFile("/Users/raja/Documents/Thesis/ADMM_matlab/Valley_Filling_1.1/Jose/EVs/home/" + i + ".mat");
+		 
+		 String D = "";
+		 
+		 for(double d: sdata.getD())
+		 {
+			 D += d + ",";
+			//x_max += d * 4 + ",";
+		 }
+		 data += "[";
+		 data += D.substring(0,D.length() - 1);
+		 data += "]|[";
+		 
+		 for(double d: sdata.getA()) {
+			 data += String.valueOf(d) + ",";
+		 }
+		 data = data.substring(0,data.length() - 1);
+		 data += "]|" + sdata.getR() + "|[" ; //]|R_value|gamma_value|alpha_value|rho|[
+		 
+		 
+		 for(double d: sdata.getSmax()) {
+			 data += String.valueOf(d) + ",";
+		 }
+		 data = data.substring(0,data.length() - 1);
+		 data += "]|[";
+		 
+		 for(double d: sdata.getSmin()) {
+			 data += String.valueOf(d) + ",";
+		 }
+		 data = data.substring(0,data.length() - 1);
+		 data += "]|";
+		 
+		 for(double[] arr: sdata.getB()) {
+			 data += "[";
+			 for(double d : arr) {
+				 data += String.valueOf(d) + ",";
+			 }
+			 data = data.substring(0,data.length() - 1);
+			 data += "]";
+		 }
+		 
+		 data +="\n";
+		 
+	}
+	writeFile(data,"EVs_new.txt");
+}
+
 
 private static void writeMasterFile() throws FileNotFoundException, UnsupportedEncodingException
 {

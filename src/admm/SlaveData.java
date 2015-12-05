@@ -24,6 +24,20 @@ public class SlaveData {
 		this.Smin = Utils.scalerAdd(Smin, -0.0001);
 	}
 	
+	public SlaveData(String input) {
+		String[] splitData = input.split("\\|");
+		
+		this.d = Utils.getArray(splitData[0]);
+		this.A = Utils.getArray(splitData[1]);
+		this.R = Double.parseDouble(splitData[2]);
+		this.Smax = Utils.getArray(splitData[3]);
+		this.Smin = Utils.getArray(splitData[4]);
+		this.B = Utils.getDoubleArray(splitData[5]);
+		
+		this.Smax = Utils.scalerAdd(this.Smax, 0.0001);
+		this.Smin = Utils.scalerAdd(this.Smin, -0.0001);
+	}
+	
 	public double[] getD() {
 		return this.d;
 	}
