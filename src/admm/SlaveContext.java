@@ -1,25 +1,24 @@
 package admm;
 
 import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.OutputStream;
-import java.util.Iterator;
 
-import ilog.concert.IloConstraint;
 import ilog.concert.IloException;
 import ilog.concert.IloNumExpr;
 import ilog.concert.IloNumVar;
-import ilog.concert.IloRange;
 import ilog.cplex.IloCplex;
 import ilog.cplex.IloCplex.CplexStatus;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.io.IntWritable;
+import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hama.bsp.BSPPeer;
 
+/*
+ * This class loads the data for an EV and solves its model. An object of this class is created for each EV in each iteration.
+ */
 public class SlaveContext {
 	double[] x_salve;
 	private double gamma = 0;
@@ -33,58 +32,54 @@ public class SlaveContext {
 	private double[] x_optimal;
 	private double[] x;
 	int currentEVNo;
-	private String evFileName;
-	private boolean firstIteration = true;
-	private Configuration conf;
 	private double[] xOptimalDifference;
 	
-	public SlaveContext(String fileName, double[] xMean, double[] u, int currentEVNo, double rhoValue, boolean isFirstIteration, BSPPeer<NullWritable, NullWritable,IntWritable, Text, Text> peer, double delta) throws IOException
+	/*
+	 * The default constructor which loads the EV from file system.
+	 */
+	public SlaveContext(String fileName, double[] xMean, double[] u, int currentEVNo, double rhoValue, boolean isFirstIteration, BSPPeer<LongWritable, Text,IntWritable, Text, Text> peer, double delta, double[] oldXOptimal) throws IOException
 	{	
-		firstIteration = isFirstIteration;
-		conf = peer.getConfiguration();
+		//firstIteration = isFirstIteration;
+		//conf = peer.getConfiguration();
 		
-		slaveData = Utils.LoadSlaveDataFromMatFile(fileName, firstIteration, peer);
-		this.x = slaveData.getXOptimal(); //Read the last optimal value directly from the .mat file
-		x_optimal = new double[this.x.length];
+		slaveData = Utils.LoadSlaveDataFromMatFile(fileName, peer);
 		
 		if(!isFirstIteration)
-			xOptimalDifference = slaveData.getXOptimal(); //Take the old value of optimal value from the mat file
+			this.x = oldXOptimal;
 		else
-			xOptimalDifference = new double[slaveData.getXOptimal().length];
+			this.x = new double[u.length];
 		
+		x_optimal = new double[this.x.length];
 		rho = rhoValue;
-		evFileName = fileName; 
 		
 		this.alpha = ((0.05/3600) * (15*60)) / delta;
-		//System.out.println("DELTA --> " + delta + "  ALPHA --> " + this.alpha);
 		
 		this.xi_max = Utils.scalerMultiply(this.slaveData.getD(), 4);
 		this.xi_min = Utils.scalerMultiply(this.slaveData.getD(), 0);
-//		this.xi_max = Utils.scalerMultiply(this.slaveData.getD(), 20);
-//		this.xi_min = Utils.scalerMultiply(this.slaveData.getD(), -20);
 		
 		this.xMean = xMean;
 		this.u = u;
 		this.currentEVNo = currentEVNo;
 	}
 	
+	/*
+	 * This function solves the model using IBM CPLEX and returns the cost. The key for a sucessful long run is that you donot
+	 * create the CPLEX instances again and again because the objects are not cleaned up by GC. So, always use clearModel to
+	 * clear out the old model and create a new one and reuse the same cplex object again and again.
+	 */
 	public double optimize(IloCplex cplex) throws IloException, FileNotFoundException
-	{
-		//IloCplex cplex = new IloCplex();
-		//OutputStream out = new FileOutputStream("logfile_slave");
-		//cplex.setOut(out);
-		//Ilo
+	{	
 		cplex.clearModel();
 		cplex.setOut(null);
 		
-		IloNumVar[] x_i = new IloNumVar[x.length];
+		IloNumVar[] x_i = new IloNumVar[this.x.length];
 		
-		for(int i = 0; i < x.length ; i++) {
+		for(int i = 0; i < this.x.length ; i++) {
 			x_i[i] = cplex.numVar(xi_min[i], xi_max[i]);
 		}
 		
 	    double gammaAlpha = this.gamma * this.alpha;
-		double[] data = subtractOldMeanU(x);
+		double[] data = subtractOldMeanU(this.x);
 		
 		IloNumExpr[] exps = new IloNumExpr[data.length];
 		
@@ -128,8 +123,6 @@ public class SlaveContext {
 //			cplex.exportModel("EV_" + currentEVNo + ".lp");
 		
 		if ( cplex.solve() ) {
-			//cplex.solve();
-			
 			x_optimal = new double[x_i.length];
 			
 			for(int u=0; u< x_i.length; u++)
@@ -137,21 +130,15 @@ public class SlaveContext {
 				x_optimal[u] = cplex.getValues(x_i)[u];
 			}
 			
-			//System.out.println("@@@@@@@Slave Opti Start");
-			//Utils.PrintArray(x_optimal);
-			
 			//Calculate x_i^k - x_i^k-1
-			xOptimalDifference = Utils.calculateVectorSubtraction(x_optimal, xOptimalDifference);
+			xOptimalDifference = Utils.calculateVectorSubtraction(x_optimal, this.x);
 			
 			//Write the x_optimal to mat file
-			Utils.SlaveXToMatFile(evFileName, x_optimal, conf);
+			//Updated: Don't write to harddrive, it is very expensive.
+			//Utils.SlaveXToMatFile(evFileName, x_optimal, conf);
 			
-			//TODO: Print -Remove
-	//		System.out.println("$$$$$$$$$$////////// Cost Value ////// + " + cplex.getObjValue());
 			double result = cplex.getObjValue();
 			
-			//cplex = null;
-			//cplex.end();
 			x_i = null;
 			exps = null;
 			AXExpEq = null;
@@ -170,43 +157,7 @@ public class SlaveContext {
 			CplexStatus s = cplex.getCplexStatus();
 			//cplex.exportModel("27MatFileModel.lp");
 			System.out.println("Status -> " + s.toString());
-			//System.out.println("CPlex -> " + cplex.getModel().toString());
 			
-//			IloRange[] con = new IloRange[cplex.getNrows()];
-//			System.out.println("Size -> " + cplex.getNrows());
-//			
-//			Iterator it = cplex.iterator();
-//			int i=0;
-//			while (it.hasNext()) {
-//			  Object thing = it.next();
-////			  if (thing instanceof IloNumVar) {
-////			    System.out.print("Variable ");
-////			  }
-//			   if (thing instanceof IloRange) {
-//				   con[i] = (IloRange) thing;
-//			  }
-//			  else if (thing instanceof IloObjective) {
-//			    System.out.print("Objective ");
-//			  }
-//			  System.out.println("named " +
-//			                     ((IloAddable) thing).getName());
-			//}
-//			cplex.getinf
-//			
-//			
-//			
-//			cplex.feasOpt(con, arg1, arg2)
-			//cplex.getInfeasibilities(cplex.feasOpt(arg0, arg1))
-			//System.out.println("IIS -> " + cplex.getIIS().toString());
-//			cplex.getModel();
-//			
-//			cplex.getInfeasibilities()
-			
-//			cplex.getin
-//			cplex.feasOpt(cplex., arg1)
-			
-			//cplex = null;
-			//cplex.end();
 			x_i = null;
 			exps = null;
 			AXExpEq = null;
@@ -215,68 +166,97 @@ public class SlaveContext {
 		}
 	}
 	
-	
+	/*
+	 * This function calculates -xold + xMean + u
+	 */
 	private double[] subtractOldMeanU(double[] xold)
 	{
 		xold = Utils.scalerMultiply(xold, -1);
 		return Utils.vectorAdd(Utils.vectorAdd(xold, this.xMean),this.u);
-		
-		//K= xold - xmean - u;
-//		this.xMean = Utils.scalerMultiply(this.xMean, -1);
-//		this.u = Utils.scalerMultiply(this.u, -1);
-//		return Utils.vectorAdd(Utils.vectorAdd(xold, this.xMean),this.u);
 	}
 	
+	/*
+	 * Getter to access the current EV being processed.
+	 */
 	public int getCurrentEVNo()
 	{
 		return this.currentEVNo;
 	}
 	
+	/*
+	 * Getter for accessing xOptimal.
+	 */
 	public double[] getXOptimalSlave()
 	{
 		return this.x_optimal;
 	}
 	
+	/*
+	 * Getter to access the alpha.
+	 */
 	public double getAlpha()
 	{
 		return this.alpha;
 	}
 	
+	/*
+	 * Getter to access the difference of old optimal value and current optimal value (x_old* - x*)
+	 */
 	public double[] getXOptimalDifference() {
 		return this.xOptimalDifference;
 	}
 	
-	
+	/*
+	 * Getter to access the xi_max.
+	 */
 	public double[] getXimax()
 	{
 		return this.xi_max;
 	}
 	
+	/*
+	 * Getter to access the xi_min.
+	 */
 	public double[] getXimin()
 	{
 		return this.xi_min;
 	}
 	
+	/*
+	 * Setter to set u.
+	 */
 	public void setU(double[] u)
 	{
 		this.u = u;
 	}
 	
+	/*
+	 * Setter to set xMean.
+	 */
 	public void setXMean(double[] xmean)
 	{
 		this.xMean = xmean;
 	}
 	
+	/*
+	 * Getter for u.
+	 */
 	public double[] getU()
 	{
 		return this.u;
 	}
 	
+	/*
+	 * Getter for xMean.
+	 */
 	public double[] getXMean()
 	{
 		return this.xMean;
 	}
 	
+	/*
+	 * Getter for x.
+	 */
 	public double[] getX()
 	{
 		return this.x;

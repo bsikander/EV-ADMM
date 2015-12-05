@@ -1,5 +1,8 @@
 package admm;
 
+/*
+ * This class represents the data for a single EV that is loaded from file system. 
+ */
 public class SlaveData {
 	private double[] d;
 	private double[] A;
@@ -7,9 +10,11 @@ public class SlaveData {
 	private double R;
 	private double[] Smax;
 	private double[] Smin;
-	private double[] x_optimal;
 	
-	public SlaveData(double[] d, double[] A, double[][] B, double R, double[] Smax, double[] Smin, double[] x_optimal)
+	/*
+	 * The default constructor which takes all the objects as parameters that were loaded from file system for a single EV.
+	 */
+	public SlaveData(double[] d, double[] A, double[][] B, double R, double[] Smax, double[] Smin)
 	{
 		this.d = d;
 		this.A = A;
@@ -17,7 +22,20 @@ public class SlaveData {
 		this.R = R;
 		this.Smax = Utils.scalerAdd(Smax, 0.0001);
 		this.Smin = Utils.scalerAdd(Smin, -0.0001);
-		this.x_optimal = x_optimal;
+	}
+	
+	public SlaveData(String input) {
+		String[] splitData = input.split("\\|");
+		
+		this.d = Utils.getArray(splitData[0]);
+		this.A = Utils.getArray(splitData[1]);
+		this.R = Double.parseDouble(splitData[2]);
+		this.Smax = Utils.getArray(splitData[3]);
+		this.Smin = Utils.getArray(splitData[4]);
+		this.B = Utils.getDoubleArray(splitData[5]);
+		
+		this.Smax = Utils.scalerAdd(this.Smax, 0.0001);
+		this.Smin = Utils.scalerAdd(this.Smin, -0.0001);
 	}
 	
 	public double[] getD() {
@@ -43,9 +61,4 @@ public class SlaveData {
 	public double[] getSmin() {
 		return this.Smin;
 	}
-	
-	public double[] getXOptimal() {
-		return this.x_optimal;
-	}
- 	
 }

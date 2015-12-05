@@ -9,6 +9,9 @@ import org.apache.hadoop.io.Writable;
 import org.codehaus.jackson.annotate.JsonProperty;
 import org.codehaus.jackson.map.ObjectMapper;
 
+/*
+ * This class is responsible for serializing and deserializing the data that slaves sends to master using the Jackson library.
+ */
 public class NetworkObjectSlave implements Writable{
 	private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 	
@@ -24,6 +27,9 @@ public class NetworkObjectSlave implements Writable{
 	@JsonProperty("cost")
 	private double cost;
 	
+	/*
+	 * Parameterized constructor
+	 */
 	public NetworkObjectSlave(double[] x_i, int EVId, double[] x_i_difference, double cost)
 	{
 		this.x_i = x_i;
@@ -48,14 +54,12 @@ public class NetworkObjectSlave implements Writable{
 		Text contextJson = new Text();
 		contextJson.readFields(in);
 		setNetworkObjectSlave(OBJECT_MAPPER.readValue(contextJson.toString(), NetworkObjectSlave.class));
-		
 	}
 
 	@Override
 	public void write(DataOutput out) throws IOException {
 		Text contextJson = new Text(OBJECT_MAPPER.writeValueAsString(this));
 		contextJson.write(out);
-		
 	}
 	
 	@JsonProperty("x_i")

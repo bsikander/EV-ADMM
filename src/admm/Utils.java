@@ -30,14 +30,21 @@ import com.jmatio.io.MatFileWriter;
 import com.jmatio.types.MLArray;
 import com.jmatio.types.MLDouble;
 
+/*
+ * This class holds all the static utility functions.
+ */
 public class Utils {
 	
+	private Utils() {}
+	
+	/*
+	 * This function loads the aggregator mat file from file system and populates the MasterData object.
+	 */
 	public static MasterData LoadMasterDataFromMatFile(String filePath, Configuration conf)
 	{
 		File tempMatFile = null;
 		try
-		{
-			//File tempMatFile = getFileFromHDFS(conf, filePath);
+		{	
 			tempMatFile = getFileFromHDFS(conf, filePath);
 			MatFileReader matfilereader = new MatFileReader(tempMatFile);
 			
@@ -65,16 +72,17 @@ public class Utils {
 		}
 	}
 	
+	/*
+	 * This function loads the aggregator mat file from file system and populates the MasterData object.
+	 */
 	public static MasterDataValley LoadMasterDataValleyFillingFromMatFile(String filePath, Configuration conf)
 	{
 		File tempMatFile = null;
 		try
-		{
-			//File tempMatFile = getFileFromHDFS(conf, filePath);
+		{	
 			tempMatFile = getFileFromHDFS(conf, filePath);
 			MatFileReader matfilereader = new MatFileReader(tempMatFile);
 			
-			//double[][] reArray = ((MLDouble)matfilereader.getMLArray("re")).getArray(); //Conversion
 			double[][] DArray = ((MLDouble)matfilereader.getMLArray("D")).getArray(); //Conversion
 			double[][] priceArray = ((MLDouble)matfilereader.getMLArray("price")).getArray();
 			
@@ -97,12 +105,18 @@ public class Utils {
 		}
 	}
 	
+	/*
+	 * This function returns the file system object.
+	 */
 	private static FileSystem getFSObject(Configuration conf) throws IOException, URISyntaxException
 	{
 		FileSystem fs = FileSystem.get(conf);
 		return fs;
 	}
 	
+	/*
+	 * This function reads and returns the file it reads from HDFS.
+	 */
 	private static File getFileFromHDFS(Configuration conf, String filePath) throws IOException, URISyntaxException {
 		FileSystem fs = getFSObject(conf);
 		FSDataInputStream in = fs.open(new Path(filePath));
@@ -114,16 +128,16 @@ public class Utils {
 		return tempMatFile;
 	}
 	
-	public static SlaveData LoadSlaveDataFromMatFile(String filePath, boolean isFirstIteration, BSPPeer<NullWritable, NullWritable,IntWritable, Text, Text> peer) throws IOException
+	/*
+	 * This function loads the EVs from mat file into SlaveData object.
+	 */
+	public static SlaveData LoadSlaveDataFromMatFile(String filePath, BSPPeer<NullWritable, NullWritable,IntWritable, Text, Text> peer) throws IOException
 	{
 		File tempMatFile = null;
 		try
 		{	
-			//System.out.println("FILE PATH: ->" + filePath);
-			//File tempMatFile = getFileFromHDFS(peer.getConfiguration(), filePath);
 			tempMatFile = getFileFromHDFS(peer.getConfiguration(), filePath);
-	
-			//peer.write(new IntWritable(1), new Text("Inside LOAD SLAVE DATA FROM MAT FILE"));
+			
 			MatFileReader matfilereader = new MatFileReader(tempMatFile);
 			
 			double[][] dArray = ((MLDouble)matfilereader.getMLArray("d")).getArray();
@@ -133,21 +147,21 @@ public class Utils {
 			double[][] SmaxArray = ((MLDouble)matfilereader.getMLArray("S_max")).getArray(); //Conversion
 			double[][] SminArray = ((MLDouble)matfilereader.getMLArray("S_min")).getArray(); //Conversion
 			
-			double[][] x_optimal = new double[dArray[0].length][1];
-			if(matfilereader.getMLArray("x_optimal") == null || isFirstIteration == true) {
-				peer.write(new IntWritable(1), new Text("X_OTIMAL NOT FOUND .. WRITING ZERO"));
-				for(int i=0; i< dArray[0].length;i++) {
-					x_optimal[i][0] = 0;
-				}
-			}
-			else {
-				x_optimal = ((MLDouble)matfilereader.getMLArray("x_optimal")).getArray(); //Conversion
-				
-				peer.write(new IntWritable(1), new Text("X_OPTIMAL FOUND"));
-				//Utils.PrintArray(getSingleArrayFromDouble(x_optimal));
-			}
-			
-			peer.write(new IntWritable(1), new Text(Utils.convertDoubleArrayToString(getSingleArrayFromDouble(x_optimal))));
+//			double[][] x_optimal = new double[dArray[0].length][1];
+//			if(matfilereader.getMLArray("x_optimal") == null || isFirstIteration == true) {
+//				peer.write(new IntWritable(1), new Text("X_OTIMAL NOT FOUND .. WRITING ZERO"));
+//				for(int i=0; i< dArray[0].length;i++) {
+//					x_optimal[i][0] = 0;
+//				}
+//			}
+//			else {
+//				x_optimal = ((MLDouble)matfilereader.getMLArray("x_optimal")).getArray(); //Conversion
+//				
+//				peer.write(new IntWritable(1), new Text("X_OPTIMAL FOUND"));
+//				//Utils.PrintArray(getSingleArrayFromDouble(x_optimal));
+//			}
+//			
+//			peer.write(new IntWritable(1), new Text(Utils.convertDoubleArrayToString(getSingleArrayFromDouble(x_optimal))));
 			
 			SlaveData context = new SlaveData(
 											dArray[0], 
@@ -155,8 +169,7 @@ public class Utils {
 											BArray, 
 											RArray[0][0],
 											getSingleArrayFromDouble(SmaxArray),
-											getSingleArrayFromDouble(SminArray),
-											getSingleArrayFromDouble(x_optimal)
+											getSingleArrayFromDouble(SminArray)
 											);
 			
 			matfilereader = null;
@@ -176,6 +189,10 @@ public class Utils {
 		}
 	}
 	
+	/*
+	 * This function stores the optimal X value back to mat file. This function is not used anymore because writing data to
+	 * takes too much time.
+	 */
 	public static void SlaveXToMatFile(String filePath, double[] x, Configuration conf)
 	{
 		File tempMatFile = null;
@@ -228,13 +245,46 @@ public class Utils {
 		}
 	}
 	
-	public static File stream2file (InputStream in, String fileName) throws IOException {
+	public static double[] getArray(String input) {
+		double[] arr;
+		
+		input = input.substring(1,input.length() - 1); //remove [ ] symbols
+		String[] values = input.split(",");
+		arr = new double[values.length];
+		
+		int index = 0;
+		for(String s: values) {
+			arr[index] = Double.parseDouble(s);
+			index ++;
+		}
+		return arr;
+	}
+	
+	public static double[][] getDoubleArray(String input) {
+		double[][] arr;
+		
+		String[] values = input.split("]");
+		
+		int index =0;
+		arr = new double[values.length][];
+		
+		for(String s: values) {
+			s += "]";
+			arr[index] = getArray(s);
+			index++;
+		}
+		return arr;
+	}
+	
+	/*
+	 * This function reads a file from HDFS into a java File object.
+	 */
+	public static File stream2file(InputStream in, String fileName) throws IOException {
         final File tempFile = File.createTempFile(fileName, ".tmp");
         tempFile.deleteOnExit();
         
         FileOutputStream out = new FileOutputStream(tempFile);
         try {
-            //IOUtils.copy(in, out);
         	ByteStreams.copy(in, out);
         }
         catch(Exception e) {
@@ -247,7 +297,10 @@ public class Utils {
         }
         return tempFile;
     }
-	
+
+	/*
+	 * For debugging purposes, this function converts double array to string.
+	 */
 	public  static String convertDoubleArrayToString(double[] arr) {
 		String result = "";
 		for(int i=0; i< arr.length; i++){
@@ -256,13 +309,16 @@ public class Utils {
 		return result;
 	}
 	
+	/*
+	 * While loading the EVs, the mat reader returns a double array e.g 96 * 1. This function converts that array
+	 * to a single array.
+	 */
 	public static double[] getSingleArrayFromDouble(double[][] dArray)
 	{
 		double[] sArray = new double[dArray.length];
 		int i = 0;
 		for(double[] d: dArray)
-		{
-			//sArray[i] = d[0];
+		{	
 			sArray[i] = Utils.round(d[0]);
 			i++;
 		}
@@ -270,6 +326,9 @@ public class Utils {
 		return sArray;
 	}
 	
+	/*
+	 * This function returns an array of a specified size with all 0's as the default value.
+	 */
 	public static double[] getZeroArray(int size)
 	{
 		double[] zeroArray = new double[size];
@@ -281,6 +340,9 @@ public class Utils {
 		return zeroArray;
 	}
 	
+	/*
+	 * This function returns a double array of a specific size and data specified by user. 
+	 */
 	public static double[] getArrayWithData(int size, int data)
 	{
 		double[] zeroArray = new double[size];
@@ -292,6 +354,9 @@ public class Utils {
 		return zeroArray;
 	}
 	
+	/*
+	 * This function returns a double array of a specific size with all zeros.
+	 */
 	public static double[][] getZeroDoubleArray(int row, int col)
 	{
 		double[][] zeroArray = new double[row][col];
@@ -305,6 +370,9 @@ public class Utils {
 		return zeroArray;
 	}
 
+	/*
+	 * This function multiplies all the index of array with a specific value specified by user.
+	 */
 	public static double[] scalerMultiply(double[] arr, double multiplier)
 	{	
 		double[] newArr = new double[arr.length];
@@ -316,6 +384,9 @@ public class Utils {
 		return newArr;
 	}
 	
+	/*
+	 * This function adds a value specified by user to each element of array.
+	 */
 	public static double[] scalerAdd(double[] arr, double add)
 	{
 		double[] newArr = new double[arr.length];
@@ -327,6 +398,9 @@ public class Utils {
 		return newArr;
 	}
 	
+	/*
+	 * This function adds two double arrays and returns the added array.
+	 */
 	public static double[] vectorAdd(double[] arr1, double[] arr2)
 	{
 		double[] sumArr = new double[arr1.length];
@@ -339,6 +413,9 @@ public class Utils {
 		return sumArr;
 	}
 	
+	/*
+	 * This function replaces the whole column in a double array with an array array specified by user.
+	 */
 	public static double[][] setColumnInMatrix(double[][] original, double[] column, int columnId)
 	{	
 		for(int i=0; i < column.length; i++)
@@ -349,6 +426,9 @@ public class Utils {
 		return original;
 	}
 	
+	/*
+	 * This function returns a column from the double array.
+	 */
 	public static double[] getColumn(double[][] original, int columnId)
 	{
 		double[] column = new double[original.length];
@@ -360,6 +440,9 @@ public class Utils {
 		return column;
 	}
 	
+	/*
+	 * This function calculates the mean of a vector.
+	 */
 	public static double[] calculateMean(double[] xMasterOptimal, double[] xSlaveAverageOptimal, int evCount)
 	{	
 		double [] average = Utils.vectorAdd(xMasterOptimal, xSlaveAverageOptimal);
@@ -369,6 +452,9 @@ public class Utils {
 		return average;
 	}
 	
+	/*
+	 * This function calculates the mean of a vector.
+	 */
 	public static double calculateMean(double[] vector)
 	{
 		double mean = 0;
@@ -380,6 +466,9 @@ public class Utils {
 		
 	}
 	
+	/*
+	 * This function rounds the double value to a specified decimal places.
+	 */
 	public static double round(double value) {
 //		int places = Constants.ROUND_PLACES;
 //	    if (places < 0) throw new IllegalArgumentException();
@@ -390,6 +479,9 @@ public class Utils {
 		return value;
 	}
 	
+	/*
+	 * This function rounds the double value to a specified decimal value.
+	 */
 	public static double roundDouble(double num, int decimalPlaces)
 	{
 //		double multiplier = 10.0 * (decimalPlaces-1);
@@ -403,6 +495,9 @@ public class Utils {
 		//return value;
 	}
 	
+	/*
+	 * This function sums all the EVs across columns and return it.
+	 */
 	public static double[] calculateSumOfEVOptimalValue(double[][] matrix)
 	{
 		double[] average = new double[matrix.length];
@@ -420,7 +515,7 @@ public class Utils {
 		
 		return average;
 	}
-
+//TODO: CHECK THIS.
 	public static double[] calculateSum(double[][] matrix)
 	{
 		double[] sumArray = new double[matrix.length];

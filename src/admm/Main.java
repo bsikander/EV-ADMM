@@ -1,24 +1,20 @@
 package admm;
 
-import java.io.File;
 import java.io.IOException;
-import java.io.OutputStream;
-import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.concurrent.TimeUnit;
 
-import org.apache.hadoop.conf.Configured;
-import org.apache.hadoop.fs.FSDataOutputStream;
-import org.apache.hadoop.fs.FileStatus;
-import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hama.HamaConfiguration;
 import org.apache.hama.bsp.BSPJob;
 import org.apache.hama.bsp.BSPJobClient;
 import org.apache.hama.bsp.ClusterStatus;
-import org.apache.hama.bsp.FileInputFormat;
 import org.apache.hama.bsp.NullInputFormat;
-import org.apache.hama.bsp.TextInputFormat;
 
+/*
+ * The main entry point of the algorithm. This function takes multiple command line arguments to change the behavior of the algorithm.
+ * It also starts the BSP class.
+ */
 public class Main {
 	public static void main(String[] args) throws IOException, InterruptedException, ClassNotFoundException, URISyntaxException {		
 		
@@ -78,7 +74,13 @@ public class Main {
 		long difference = lEndTime - lStartTime;
 		long milliseconds = difference/1000000;
 		System.out.println("Elapsed milliseconds: " + milliseconds);
-		System.out.println("Elapsed milliseconds: " + milliseconds/1000);
+		System.out.println("Elapsed seconds: " + milliseconds/1000);
+		System.out.println("Elapsed time: " + String.format("%02d:%02d:%02d", 
+			    TimeUnit.MILLISECONDS.toHours(milliseconds),
+			    TimeUnit.MILLISECONDS.toMinutes(milliseconds) - 
+			    TimeUnit.HOURS.toMinutes(TimeUnit.MILLISECONDS.toHours(milliseconds)),
+			    TimeUnit.MILLISECONDS.toSeconds(milliseconds) - 
+			    TimeUnit.MINUTES.toSeconds(TimeUnit.MILLISECONDS.toMinutes(milliseconds))));
 		
 		System.out.print("end");
 		}
@@ -89,6 +91,9 @@ public class Main {
 		}
 	}
 	
+	/*
+	 * In case user is not using the command line parameters properly. This function prints the correct usage information.
+	 */
 	private static void printUsage() {
 	    System.out.println("Usage: <input_aggregator> <input_ev> <output> "
 	        + "[maximum iterations (default 4)] [ev count (default 4)] [bsp tasks (default 2)] [rho (default 0.01)]");

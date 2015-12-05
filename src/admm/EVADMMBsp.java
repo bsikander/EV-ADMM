@@ -1,14 +1,13 @@
 package admm;
 
-import ilog.concert.IloException;
-import ilog.cplex.IloCplex;
-
 import java.io.IOException;
-import java.text.DecimalFormat;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.apache.hadoop.io.IntWritable;
+import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hama.bsp.BSP;
@@ -18,21 +17,55 @@ import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-public class EVADMMBsp extends BSP<NullWritable, NullWritable, IntWritable, Text, Text>{
+import ilog.concert.IloException;
+import ilog.cplex.IloCplex;
+
+public class EVADMMBsp extends BSP<LongWritable, Text, IntWritable, Text, Text>{
 	public static final Log LOG = LogFactory.getLog(EVADMMBsp.class);
 	
+	/*
+	 * Stores the name of master node. See the setup method for the selection logic of master task.
+	 */
 	private String masterTask;
-	//MasterContext masterContext;
+	
+	/*
+	 * This object is responsible for solving the Valley Filling model at master.
+	 */
 	MasterContextValley masterContext;
+	
+	/*
+	 * This object is used to load and solve the EV models.
+	 */
 	SlaveContext slaveContext;
 	
 	double[] xsum;
 	ArrayList<Double> cost;
 	
+	/*
+	 * Stores the total iterations of the algorithm. This value is set by user using the command line parameter.
+	 */
 	private static int DEFAULT_ADMM_ITERATIONS_MAX;
+	
+	/*
+	 * Stores the current value of RHO. User can specify the default RHO value through the command line parameter.
+	 * This algorithm updates the RHO after each iteration to speed up the algorithm. See checkConvergence function
+	 * for the RHO update logic.
+	 */
 	private static double RHO;
+	
+	/*
+	 * It stores the current path of Aggregator file. This path is used to load the initial values at master.
+	 */
 	private static String AGGREGATOR_PATH;
+	
+	/*
+	 * Contains the path where all the EV's are located.
+	 */
 	private static String EV_PATH;
+	
+	/*
+	 * This value is set by the user through command line and its value represents the total EV's we have to process.
+	 */
 	private static int EV_COUNT;
 	double s_norm;
 	double r_norm;
@@ -41,17 +74,26 @@ public class EVADMMBsp extends BSP<NullWritable, NullWritable, IntWritable, Text
 //	List<Result> resultList = new ArrayList<Result>();
 //	List<ResultMaster> resultMasterList = new ArrayList<ResultMaster>();
 	
+	/*
+	 * (non-Javadoc)
+	 * @see org.apache.hama.bsp.BSP#bsp(org.apache.hama.bsp.BSPPeer)
+	 */
 	@Override
-	public void bsp(BSPPeer<NullWritable, NullWritable,IntWritable, Text, Text> peer) throws IOException, SyncException, InterruptedException {
+	public void bsp(BSPPeer<LongWritable, Text,IntWritable, Text, Text> peer) throws IOException, SyncException, InterruptedException {
 		int k = 0;
 		
 		if(peer.getPeerName().equals(this.masterTask)) //The master task
 		{	
-			//masterContext = new MasterContext(AGGREGATOR_PATH,EV_COUNT,RHO, peer.getConfiguration());
 			masterContext = new MasterContextValley(AGGREGATOR_PATH,EV_COUNT,RHO, peer.getConfiguration());
 			
 			xsum = new double[masterContext.getT()];
 			cost = new ArrayList<Double>();
+			
+			// Create a list of network object but only up to total peers -1 (excluding master)
+			// Set the u and xMean for each object
+			// For each peer, populate the EVs that it has to process
+			// In the end, send only one object per machine
+			List<NetworkObjectMaster> listOfNetworkMasterObjects = createMasterNetworkObjectList(peer);
 			
 			while(k != DEFAULT_ADMM_ITERATIONS_MAX)
 			{	
@@ -62,25 +104,12 @@ public class EVADMMBsp extends BSP<NullWritable, NullWritable, IntWritable, Text
 				double[] slaveAverageOptimalValue = new double[masterContext.getT()]; //Moved up here to retain the value of old average of all the xoptimal
 				
 				try {
-					int currentEV = 0;
-					
-					//Create a list of network object but only upto total peers -1 (excluding master)
-					//Set the u and xMean for each object
-					//For each peer, populate the EVs that it has to process
-					//In the end, send only one object per machine
-					List<NetworkObjectMaster> listOfNetworkMasterObjects = new ArrayList<NetworkObjectMaster>();
-					for(int i=0; i < peer.getNumPeers() -1; i++) {
-						listOfNetworkMasterObjects.add(new NetworkObjectMaster(masterContext.getu(), masterContext.getxMean(), new ArrayList<Integer>(),masterContext.getMasterData().getDelta()));
-					}
-					
-					while(currentEV != masterContext.getN() - 1)
-					{	
-						listOfNetworkMasterObjects.get(currentEV % (peer.getNumPeers()-1)).addEV(currentEV);
-						currentEV++;
-					}
-					
 					int peerCount = 1;
 					for(NetworkObjectMaster obj : listOfNetworkMasterObjects) {
+						//Set new U and XMean for each peer object after each iteration
+						listOfNetworkMasterObjects.get(peerCount - 1).setU(masterContext.getu());
+						listOfNetworkMasterObjects.get(peerCount - 1).setxMean(masterContext.getxMean());
+						
 						sendxMeanAndUToSlaves(peer, obj, peer.getPeerName(peerCount));
 						peerCount++;
 					}
@@ -95,9 +124,10 @@ public class EVADMMBsp extends BSP<NullWritable, NullWritable, IntWritable, Text
 					
 					double[] masterXOptimalOld = masterContext.getXOptimal();
 					double[] oldXMean = masterContext.getxMean(); 
-					double costvalue = masterContext.optimize(masterContext.getXOptimal(),k);
+					masterContext.optimize(masterContext.getXOptimal(),k);
+					//double costvalue = masterContext.optimize(masterContext.getXOptimal(),k);
 					
-					double totalcost = costvalue + result.cost();
+					//double totalcost = costvalue + result.cost();
 					//cost= norm(D+xsum)^2
 					
 //					System.out.println("&&&&&&& DDD");
@@ -129,18 +159,6 @@ public class EVADMMBsp extends BSP<NullWritable, NullWritable, IntWritable, Text
 						time++;
 					}
 					
-					//Just for test remove the print
-//					System.out.println("*********Printing Difference Matrix");
-//					for(int i = 0; i< xDifferenceMatrix[0].length; i++)
-//					{
-//						for(int j =0; j< xDifferenceMatrix.length;j++)
-//						{
-//							System.out.print(xDifferenceMatrix[j][i] + "   ");
-//						}
-//						System.out.println();
-//					}
-//					System.out.println("*********Printing Difference Matrix END");
-					
 					boolean converged = checkConvergence(xMatrix,xDifferenceMatrix, masterContext.getxMean(), oldXMean, masterContext.getN(), masterContext.getu(), cost, k);
 					
 					if(converged == true) {
@@ -158,7 +176,6 @@ public class EVADMMBsp extends BSP<NullWritable, NullWritable, IntWritable, Text
 //					System.out.println ("Free memory : " + runtime.freeMemory() );
 
 				} catch (IloException e) {
-					// TODO Auto-generated catch block
 					e.printStackTrace();
 					System.out.println(peer.getPeerName() + "Master 1.7 :: " + e.getMessage());
 					peer.write(new IntWritable(1), new Text(peer.getPeerName() + "Master 1.7 :: " + e.getMessage()));
@@ -198,9 +215,21 @@ public class EVADMMBsp extends BSP<NullWritable, NullWritable, IntWritable, Text
 			try {
 				cplex = new IloCplex();
 			} catch (IloException e1) {
-				// TODO Auto-generated catch block
 				e1.printStackTrace();
 			}
+			
+			Map<Integer, double[]> optimalEVValues = new HashMap<Integer, double[]>(); // To store and override the optimal value of each EV
+			
+//			LongWritable key = new LongWritable();
+//			Text value = new Text();
+//			
+//			LOG.info("Slave: Read the input data");
+//			//Read each input
+//			int i = 0;
+//		
+//			while(peer.readNext(key, value) != false) {
+//				slaveContext.getXUpdate(value.toString(),i);
+//			}
 			
 			while(true)
 			{
@@ -220,15 +249,14 @@ public class EVADMMBsp extends BSP<NullWritable, NullWritable, IntWritable, Text
 							masterData.getxMean(), 
 							masterData.getU(),
 							evId,
-							RHO, isFirstIteration, peer, masterData.getDelta());
+							RHO, isFirstIteration, peer, masterData.getDelta(), optimalEVValues.get(evId + 1)); //Take old XOptimal value from the HashMap and send it to slaveContext
 					
 					try {
 						//Do optimization and write the x_optimal to mat file
 						double cost = slaveContext.optimize(cplex);
-//						if(cost == 0)
-//							return;
-					
-						//resultList.add(new Result(peer.getPeerName(),k,evId, slaveContext.getX(),masterData.getxMean(),masterData.getU(),slaveContext.getXOptimalSlave(),cost));
+						
+						optimalEVValues.put(evId + 1, slaveContext.getXOptimalSlave());
+						
 						
 						NetworkObjectSlave slave = new NetworkObjectSlave(slaveContext.getXOptimalSlave(), slaveContext.getCurrentEVNo(), slaveContext.getXOptimalDifference(), cost);
 						sendXOptimalToMaster(peer, slave);
@@ -253,17 +281,25 @@ public class EVADMMBsp extends BSP<NullWritable, NullWritable, IntWritable, Text
 			
 			cplex.end(); //clear the cplex object
 		}
-	}
+	}	
 	
+	/*
+	 * (non-Javadoc)
+	 * @see org.apache.hama.bsp.BSP#cleanup(org.apache.hama.bsp.BSPPeer)
+	 */
 	@Override
     public void cleanup(
-        BSPPeer<NullWritable, NullWritable, IntWritable, Text, Text> peer)
+        BSPPeer<LongWritable, Text, IntWritable, Text, Text> peer)
         throws IOException {
 		System.out.println(peer.getPeerName() + " is shutting down");
       }
 	
+	/*
+	 * (non-Javadoc)
+	 * @see org.apache.hama.bsp.BSP#setup(org.apache.hama.bsp.BSPPeer)
+	 */
 	@Override
-    public void setup(BSPPeer<NullWritable, NullWritable, IntWritable, Text, Text> peer) throws IOException, SyncException, InterruptedException {
+    public void setup(BSPPeer<LongWritable, Text, IntWritable, Text, Text> peer) throws IOException, SyncException, InterruptedException {
 		this.masterTask = peer.getPeerName(0); //0 is our master
 		
 		AGGREGATOR_PATH = peer.getConfiguration().get(Constants.EVADMM_AGGREGATOR_PATH);
@@ -273,6 +309,39 @@ public class EVADMMBsp extends BSP<NullWritable, NullWritable, IntWritable, Text
 		EV_COUNT = Integer.parseInt(peer.getConfiguration().get(Constants.EVADMM_EV_COUNT));
 	}
 	
+	/*
+	 * This function runs only for Master node and creates a list of NetworkMasterObject. It populates 
+	 * the EV Id array and delta before the start of iterations. The object returned is used in each iteration
+	 * to send the data to each peer.
+	 */
+	private List<NetworkObjectMaster>  createMasterNetworkObjectList(BSPPeer<LongWritable, Text, IntWritable, Text, Text> peer) {
+		List<NetworkObjectMaster> listOfNetworkMasterObjects = new ArrayList<NetworkObjectMaster>();
+		int currentEV = 0;
+		
+		for(int i=0; i < peer.getNumPeers() -1; i++) {
+			listOfNetworkMasterObjects.add(
+					new NetworkObjectMaster(
+								null, 
+								null, 
+								new ArrayList<Integer>(),
+								masterContext.getMasterData().getDelta()));
+		}
+		
+		while(currentEV != masterContext.getN() - 1)
+		{	
+			listOfNetworkMasterObjects.get(currentEV % (peer.getNumPeers()-1)).addEV(currentEV);
+			currentEV++;
+		}
+		return listOfNetworkMasterObjects;
+	}
+	
+	/*
+	 * This function checks the convergence of algorithm on master node. If the algorithm does not converges then it updates
+	 * the RHO parameter and continues. 
+	 * 
+	 * It checks the cost variance for last 6 iterations and if it remains below 1e-9 then the algorithm stops otherwise
+	 * it continues. Currently, the algorithm is only working based on the cost varaince. 
+	 */
 	private boolean checkConvergence(double[][] xMatrix, double[][] xDifferenceMatrix, double[] xMean, double[] xMean_old, int N, double[] u, ArrayList<Double> cost, int currentIteration)
 	{	
 		double[] xMeanOld_xMean = Utils.calculateVectorSubtraction(xMean_old, xMean);
@@ -282,34 +351,15 @@ public class EVADMMBsp extends BSP<NullWritable, NullWritable, IntWritable, Text
 		r_norm = Utils.calculateNorm(Utils.scaleVector(xMean, N));
 		
 		double cost_variance = 0;
-//		System.out.println(">>>>COST ARRAY");
-//		for(double d : cost)
-//		{
-//			System.out.print(d + "  ");
-//		}
-//		System.out.println();
 		
 		if(currentIteration < 5)
 			cost_variance = 1;
 		else
 		{	
-			//Get last 5 vost values and calculate variance
-//			double[] costtemp = new double[5];
-//			int count = 0;
-//			for(int i =cost.length -1 ; i > cost.length - 6; i--)
-//			{
-//				costtemp[count] = cost[i];
-//				count++;
-//			}
 			List<Double> costLast5Elements = cost.subList(cost.size()-6, cost.size());
 			double[] last5 = ArrayUtils.toPrimitive(costLast5Elements.toArray(new Double[costLast5Elements.size()]));
 
-			//System.out.println(">>>>> COST LAST 5 ARRAY: TOTAL ARRAY SIZE -> " + cost.size());
-			//Utils.PrintArray(last5);
-
 			cost_variance = Utils.getVariance(last5);
-			//cost_variance = Utils.calculateVariance(last5); 
-			//System.out.println(">>>VARIANCE -> " + cost_variance);
 		}
 
 		//eps_pri= sqrt(N*T)*1 + 1e-3 * max([norm(x), norm(x(:)- repmat(xmean,N,1))]);
@@ -327,45 +377,24 @@ public class EVADMMBsp extends BSP<NullWritable, NullWritable, IntWritable, Text
 		if(r_norm <= eps_pri && s_norm <= eps_dual || (cost_variance <= 1e-9))
 			return true;
 		
-		
-		//MATLAB CODE
-//		lambda=1e-1;
-//	    mu=1e-1;
-//	    
-//	    rhoold=rho;
-//	    u=rho/rhoold * u;
-//	    
-//	    vold=v;
-//	    v= rho *r_norm/(s_norm) -1;
-//	    
-//	    rho= rho* exp(lambda*v + mu*(v-vold));
-		
 		double lambda = 0.1;
 		double mu = 0.1;
 		double vold = v;
 		v = ((EVADMMBsp.RHO * (r_norm/s_norm)) -1);
-		//System.out.println("<><><>RHO: " + EVADMMBsp.RHO * Math.exp( (lambda* v) + (mu*(v-vold)) ) );
 		EVADMMBsp.RHO =  EVADMMBsp.RHO * Math.exp( (lambda* v) + (mu*(v-vold)) );
 		
 		masterContext.setRho(EVADMMBsp.RHO);
 				
 		System.out.println("<><<><><><<<>>>>> New RHO: " + EVADMMBsp.RHO);
 		
-			//OLD RHO UPDATE	
-//		if(r_norm > 10* s_norm) {
-//			EVADMMBsp.RHO = 2*EVADMMBsp.RHO;
-//		}
-//		else if(s_norm > 10*r_norm) {
-//			EVADMMBsp.RHO = EVADMMBsp.RHO/2;
-//		}
-//		
-//		masterContext.setRho(EVADMMBsp.RHO);
-		
-		//System.out.println("CONVERGED VALUES ////////// s_norm: " + s_norm + " -- r_norm: " + r_norm + " --eps_dual: " + eps_dual + " -- eps_pri" + eps_pri);
 		return false;
 	}
 	
-	private void sendFinishMessage(BSPPeer<NullWritable, NullWritable, IntWritable, Text, Text> peer) throws IOException
+	/*
+	 * This function is used to stop the code on all nodes. If the convergence criteria is met or total iterations have
+	 * been fulfilled then a message is sent to all the peers to stop the code.
+	 */
+	private void sendFinishMessage(BSPPeer<LongWritable, Text, IntWritable, Text, Text> peer) throws IOException
 	{
 		for(String peerName: peer.getAllPeerNames()) {
 			if(!peerName.equals(this.masterTask)) {
@@ -374,23 +403,35 @@ public class EVADMMBsp extends BSP<NullWritable, NullWritable, IntWritable, Text
 		}
 	}
 	
-	private void sendxMeanAndUToSlaves(BSPPeer<NullWritable, NullWritable, IntWritable, Text, Text> peer, NetworkObjectMaster object, String peerName) throws IOException
+	/*
+	 * This function is responsible for sending the latest xMean and U to all the slaves.
+	 */
+	private void sendxMeanAndUToSlaves(BSPPeer<LongWritable, Text, IntWritable, Text, Text> peer, NetworkObjectMaster object, String peerName) throws IOException
 	{
 		peer.send(peerName, new Text(Utils.networkMasterToJson(object)));
 	}
 	
-	private void sendXOptimalToMaster(BSPPeer<NullWritable, NullWritable, IntWritable, Text, Text> peer, NetworkObjectSlave object) throws IOException
+	/*
+	 * This function is used by all the slaves to send the latest xOptimal value to master.
+	 */
+	private void sendXOptimalToMaster(BSPPeer<LongWritable, Text, IntWritable, Text, Text> peer, NetworkObjectSlave object) throws IOException
 	{	
 		peer.send(this.masterTask, new Text(Utils.networkSlaveToJson(object)));
 	}
 	
-	private Pair<double[],double[][], Double, double[][]> receiveSlaveOptimalValuesAndUpdateX(BSPPeer<NullWritable, NullWritable, IntWritable, Text, Text> peer, int totalN) throws IOException
+	/*
+	 * This function is used to collect all the NetworkObjectSlave objects at the master node. It stores the all the
+	 * values in a double array and this array is used to check the convergence. It also averages all the received 
+	 * optimal value, adds up all the costs and stores all the difference of x_old* and x*.
+	 */
+	private Pair<double[],double[][], Double, double[][]> receiveSlaveOptimalValuesAndUpdateX(BSPPeer<LongWritable, Text, IntWritable, Text, Text> peer, int totalN) throws IOException
 	{
 		NetworkObjectSlave slave;
 		Text receivedJson;
 		
 		double[][] s = new double[this.masterContext.getXOptimal().length][totalN];
-		double[] averageXReceived = Utils.getZeroArray(this.masterContext.getXOptimal().length);
+		//double[] averageXReceived = Utils.getZeroArray(this.masterContext.getXOptimal().length);
+		double[] averageXReceived = new double[this.masterContext.getXOptimal().length];
 		double[][] allOptimalSlaveXReceived = new double[this.masterContext.getXOptimal().length][totalN];
 		
 		int ev = 0;
@@ -434,7 +475,10 @@ public class EVADMMBsp extends BSP<NullWritable, NullWritable, IntWritable, Text
 		return master;
 	}
 	
-	private NetworkObjectMaster receiveMasterUAndXMeanList(BSPPeer<NullWritable, NullWritable, IntWritable, Text, Text> peer) throws IOException
+	/*
+	 * This function is responsible for receiving data at slave which is sent by the master.
+	 */
+	private NetworkObjectMaster receiveMasterUAndXMeanList(BSPPeer<LongWritable, Text, IntWritable, Text, Text> peer) throws IOException
 	{
 		NetworkObjectMaster master = new NetworkObjectMaster();
 		Text receivedJson;
@@ -455,6 +499,9 @@ public class EVADMMBsp extends BSP<NullWritable, NullWritable, IntWritable, Text
 		Cost
 	}
 	
+	/*
+	 * This class is used to store values received from all the peers. 
+	 */
 	class Pair<T,U,C,X> {
 	    private final T m_first;
 	    private final U m_second;
