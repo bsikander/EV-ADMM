@@ -220,11 +220,7 @@ public class EVADMMBsp extends BSP<LongWritable, Text, IntWritable, Text, Text>{
 			
 			Map<Integer, double[]> optimalEVValues = new HashMap<Integer, double[]>(); // To store and override the optimal value of each EV
 			
-//			LongWritable key = new LongWritable();
-//			Text value = new Text();
-//			
-//			LOG.info("Slave: Read the input data");
-//			//Read each input
+			
 //			int i = 0;
 //		
 //			while(peer.readNext(key, value) != false) {
@@ -237,25 +233,38 @@ public class EVADMMBsp extends BSP<LongWritable, Text, IntWritable, Text, Text>{
 				
 				NetworkObjectMaster masterData = receiveMasterUAndXMeanList(peer);
 				
+				LongWritable key = new LongWritable();
+				Text value = new Text();
+				
 				if(masterData.getEV().isEmpty()) {
 					finish = true;
 				}
+				
+				int evInputIndex = 0;
+				while(peer.readNext(key, value) != false) {
+				//for(Integer evId: masterData.getEV()) {
 					
-				for(Integer evId: masterData.getEV()) {
-					peer.write(new IntWritable(1), new Text(EV_PATH + (evId +1) + ".mat"));
+					//peer.write(new IntWritable(1), new Text(EV_PATH + (evId +1) + ".mat"));
 					
 					slaveContext = null;
-					slaveContext = new SlaveContext(EV_PATH + (evId +1) + ".mat", 
+					slaveContext = new SlaveContext(value.toString(), 
 							masterData.getxMean(), 
 							masterData.getU(),
-							evId,
-							RHO, isFirstIteration, peer, masterData.getDelta(), optimalEVValues.get(evId + 1)); //Take old XOptimal value from the HashMap and send it to slaveContext
+							evInputIndex,
+							RHO, isFirstIteration, peer, masterData.getDelta(), optimalEVValues.get(evInputIndex)); //Take old XOptimal value from the HashMap and send it to slaveContext
+					
+					
+//					slaveContext = new SlaveContext(EV_PATH + (evId +1) + ".mat", 
+//							masterData.getxMean(), 
+//							masterData.getU(),
+//							evId,
+//							RHO, isFirstIteration, peer, masterData.getDelta(), optimalEVValues.get(evId + 1)); //Take old XOptimal value from the HashMap and send it to slaveContext
 					
 					try {
 						//Do optimization and write the x_optimal to mat file
 						double cost = slaveContext.optimize(cplex);
 						
-						optimalEVValues.put(evId + 1, slaveContext.getXOptimalSlave());
+						optimalEVValues.put(evInputIndex, slaveContext.getXOptimalSlave());
 						
 						
 						NetworkObjectSlave slave = new NetworkObjectSlave(slaveContext.getXOptimalSlave(), slaveContext.getCurrentEVNo(), slaveContext.getXOptimalDifference(), cost);
@@ -316,22 +325,26 @@ public class EVADMMBsp extends BSP<LongWritable, Text, IntWritable, Text, Text>{
 	 */
 	private List<NetworkObjectMaster>  createMasterNetworkObjectList(BSPPeer<LongWritable, Text, IntWritable, Text, Text> peer) {
 		List<NetworkObjectMaster> listOfNetworkMasterObjects = new ArrayList<NetworkObjectMaster>();
-		int currentEV = 0;
+		//int currentEV = 0;
 		
 		for(int i=0; i < peer.getNumPeers() -1; i++) {
 			listOfNetworkMasterObjects.add(
-					new NetworkObjectMaster(
-								null, 
-								null, 
-								new ArrayList<Integer>(),
-								masterContext.getMasterData().getDelta()));
+//					new NetworkObjectMaster(
+//								null, 
+//								null, 
+//								new ArrayList<Integer>(),
+//								masterContext.getMasterData().getDelta()));
+			new NetworkObjectMaster(
+					null, 
+					null,
+					masterContext.getMasterData().getDelta()));
 		}
 		
-		while(currentEV != masterContext.getN() - 1)
-		{	
-			listOfNetworkMasterObjects.get(currentEV % (peer.getNumPeers()-1)).addEV(currentEV);
-			currentEV++;
-		}
+//		while(currentEV != masterContext.getN() - 1)
+//		{	
+//			listOfNetworkMasterObjects.get(currentEV % (peer.getNumPeers()-1)).addEV(currentEV);
+//			currentEV++;
+//		}
 		return listOfNetworkMasterObjects;
 	}
 	
@@ -398,7 +411,8 @@ public class EVADMMBsp extends BSP<LongWritable, Text, IntWritable, Text, Text>{
 	{
 		for(String peerName: peer.getAllPeerNames()) {
 			if(!peerName.equals(this.masterTask)) {
-				peer.send(peerName, new Text(Utils.networkMasterToJson(new NetworkObjectMaster(null,null,new ArrayList<Integer>(),0))));
+				//peer.send(peerName, new Text(Utils.networkMasterToJson(new NetworkObjectMaster(null,null,new ArrayList<Integer>(),0))));
+				peer.send(peerName, new Text(Utils.networkMasterToJson(new NetworkObjectMaster(null,null,0))));
 			}	
 		}
 	}
@@ -434,7 +448,7 @@ public class EVADMMBsp extends BSP<LongWritable, Text, IntWritable, Text, Text>{
 		double[] averageXReceived = new double[this.masterContext.getXOptimal().length];
 		double[][] allOptimalSlaveXReceived = new double[this.masterContext.getXOptimal().length][totalN];
 		
-		int ev = 0;
+		//int ev = 0;
 		double cost = 0;
 		
 		while ((receivedJson = peer.getCurrentMessage()) != null) //Receive initial array 
@@ -445,17 +459,19 @@ public class EVADMMBsp extends BSP<LongWritable, Text, IntWritable, Text, Text>{
 			
 			int i = 0;
 			for(double d: slave.getXiDifference()) {
-				s[i][ev] = d;
+				//s[i][ev] = d;
+				s[i][slave.getEVId()] = d;
 				i++;
 			}
 			
 			int j = 0;
 			for(double d: slave.getXi()) { //Store all the optimizal slave values recieved inside this array
-				allOptimalSlaveXReceived[j][ev] = d;
+				//allOptimalSlaveXReceived[j][ev] = d;
+				allOptimalSlaveXReceived[j][slave.getEVId()] = d;
 				j++;
 			}
 			
-			ev++;
+			//ev++;
 		}
 	
 		//return new Pair<double[],double[][], Double>(averageXReceived,s, cost);

@@ -4,6 +4,7 @@ package admm;
  * This class represents the data for a single EV that is loaded from file system. 
  */
 public class SlaveData {
+	private int evNo;
 	private double[] d;
 	private double[] A;
 	private double[][] B;
@@ -27,12 +28,13 @@ public class SlaveData {
 	public SlaveData(String input) {
 		String[] splitData = input.split("\\|");
 		
-		this.d = Utils.getArray(splitData[0]);
-		this.A = Utils.getArray(splitData[1]);
-		this.R = Double.parseDouble(splitData[2]);
-		this.Smax = Utils.getArray(splitData[3]);
-		this.Smin = Utils.getArray(splitData[4]);
-		this.B = Utils.getDoubleArray(splitData[5]);
+		this.evNo = Integer.parseInt(splitData[0]);
+		this.d = Utils.getArray(splitData[1]);
+		this.A = Utils.getArray(splitData[2]);
+		this.R = Double.parseDouble(splitData[3]);
+		this.Smax = Utils.getArray(splitData[4]);
+		this.Smin = Utils.getArray(splitData[5]);
+		this.B = Utils.getDoubleArray(splitData[6]);
 		
 		this.Smax = Utils.scalerAdd(this.Smax, 0.0001);
 		this.Smin = Utils.scalerAdd(this.Smin, -0.0001);
@@ -60,5 +62,10 @@ public class SlaveData {
 	
 	public double[] getSmin() {
 		return this.Smin;
+	}
+	
+	public int getEvNo()
+	{
+		return this.evNo;
 	}
 }

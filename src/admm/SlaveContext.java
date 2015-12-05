@@ -9,10 +9,8 @@ import ilog.concert.IloNumVar;
 import ilog.cplex.IloCplex;
 import ilog.cplex.IloCplex.CplexStatus;
 
-import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.LongWritable;
-import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hama.bsp.BSPPeer;
 
@@ -37,12 +35,13 @@ public class SlaveContext {
 	/*
 	 * The default constructor which loads the EV from file system.
 	 */
-	public SlaveContext(String fileName, double[] xMean, double[] u, int currentEVNo, double rhoValue, boolean isFirstIteration, BSPPeer<LongWritable, Text,IntWritable, Text, Text> peer, double delta, double[] oldXOptimal) throws IOException
+	public SlaveContext(String evString, double[] xMean, double[] u, int currentEVNo, double rhoValue, boolean isFirstIteration, BSPPeer<LongWritable, Text,IntWritable, Text, Text> peer, double delta, double[] oldXOptimal) throws IOException
 	{	
 		//firstIteration = isFirstIteration;
 		//conf = peer.getConfiguration();
 		
-		slaveData = Utils.LoadSlaveDataFromMatFile(fileName, peer);
+		//slaveData = Utils.LoadSlaveDataFromMatFile(fileName, peer);
+		slaveData = new SlaveData(evString);
 		
 		if(!isFirstIteration)
 			this.x = oldXOptimal;

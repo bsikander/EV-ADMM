@@ -19,6 +19,7 @@ import org.apache.hadoop.fs.FSDataInputStream;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.IntWritable;
+import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hama.bsp.BSPPeer;
@@ -131,7 +132,7 @@ public class Utils {
 	/*
 	 * This function loads the EVs from mat file into SlaveData object.
 	 */
-	public static SlaveData LoadSlaveDataFromMatFile(String filePath, BSPPeer<NullWritable, NullWritable,IntWritable, Text, Text> peer) throws IOException
+	public static SlaveData LoadSlaveDataFromMatFile(String filePath, BSPPeer<LongWritable, Text,IntWritable, Text, Text> peer) throws IOException
 	{
 		File tempMatFile = null;
 		try
