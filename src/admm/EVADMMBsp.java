@@ -141,7 +141,7 @@ public class EVADMMBsp extends BSP<LongWritable, Text, IntWritable, Text, Text>{
 
 					masterContext.setXMean(Utils.calculateMean(masterContext.getXOptimal(), slaveAverageOptimalValue, masterContext.getN())); 	//Take Mean
 					masterContext.setU(Utils.vectorAdd(masterContext.getu(), masterContext.getxMean())); //Update u
-
+					
 					//TODO:Uncomment the convergence logic here
 					//Add the master optimal value in the matrix to check the convergence
 					double[][] xDifferenceMatrix = result.xDifferenceMatrix();
@@ -345,6 +345,7 @@ public class EVADMMBsp extends BSP<LongWritable, Text, IntWritable, Text, Text>{
 	private boolean checkConvergence(double[][] xMatrix, double[][] xDifferenceMatrix, double[] xMean, double[] xMean_old, int N, double[] u, ArrayList<Double> cost, int currentIteration)
 	{	
 		double[] xMeanOld_xMean = Utils.calculateVectorSubtraction(xMean_old, xMean);
+		
 		double[] result = Utils.addMatrixAndVector (xDifferenceMatrix, xMeanOld_xMean);
 		double[] s = Utils.scalerMultiply(result, -1*EVADMMBsp.RHO*N);
 		s_norm= Utils.calculateNorm(s);
@@ -434,7 +435,7 @@ public class EVADMMBsp extends BSP<LongWritable, Text, IntWritable, Text, Text>{
 		double[] averageXReceived = new double[this.masterContext.getXOptimal().length];
 		double[][] allOptimalSlaveXReceived = new double[this.masterContext.getXOptimal().length][totalN];
 		
-		int ev = 0;
+		//int ev = 0;
 		double cost = 0;
 		
 		while ((receivedJson = peer.getCurrentMessage()) != null) //Receive initial array 
@@ -445,17 +446,19 @@ public class EVADMMBsp extends BSP<LongWritable, Text, IntWritable, Text, Text>{
 			
 			int i = 0;
 			for(double d: slave.getXiDifference()) {
-				s[i][ev] = d;
+				//s[i][ev] = d;
+				s[i][slave.getEVId()] = d;
 				i++;
 			}
 			
 			int j = 0;
 			for(double d: slave.getXi()) { //Store all the optimizal slave values recieved inside this array
-				allOptimalSlaveXReceived[j][ev] = d;
+				//allOptimalSlaveXReceived[j][ev] = d;
+				allOptimalSlaveXReceived[j][slave.getEVId()] = d;
 				j++;
 			}
 			
-			ev++;
+			//ev++;
 		}
 	
 		//return new Pair<double[],double[][], Double>(averageXReceived,s, cost);
