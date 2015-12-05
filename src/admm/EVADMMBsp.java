@@ -133,7 +133,7 @@ public class EVADMMBsp extends BSP<LongWritable, Text, IntWritable, Text, Text>{
 //					System.out.println("&&&&&&& DDD");
 //					Utils.PrintArray(masterContext.getMasterData().getD());
 					double costtemp = Utils.calculateNorm( Utils.vectorAdd(masterContext.getMasterData().getD(), xsum) );
-				    costtemp = Math.round ((costtemp * costtemp) * 1000.0) / 1000.0; //round off to 3 decimal places.
+				    costtemp = Math.round ((costtemp * costtemp) * 100000.0) / 100000.0; //round off to 3 decimal places.
 				    cost.add(costtemp);
 					//cost.add( costtemp * costtemp );
 					
