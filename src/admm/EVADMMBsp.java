@@ -137,7 +137,7 @@ public class EVADMMBsp extends BSP<LongWritable, Text, IntWritable, Text, Text>{
 				    cost.add(costtemp);
 					//cost.add( costtemp * costtemp );
 					
-					System.out.print(String.format("%03d", (k+1)) + " > COST: " + cost.get(cost.size() -1) + " - "); 
+					System.out.print(String.format("%03d", (k+1)) + " > COST: " + String.format("%.5f", cost.get(cost.size() -1)) + " - "); 
 
 					masterContext.setXMean(Utils.calculateMean(masterContext.getXOptimal(), slaveAverageOptimalValue, masterContext.getN())); 	//Take Mean
 					masterContext.setU(Utils.vectorAdd(masterContext.getu(), masterContext.getxMean())); //Update u
