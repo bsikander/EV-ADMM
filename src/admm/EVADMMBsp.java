@@ -137,7 +137,7 @@ public class EVADMMBsp extends BSP<LongWritable, Text, IntWritable, Text, Text>{
 				    cost.add(costtemp);
 					//cost.add( costtemp * costtemp );
 					
-					System.out.print((k+1) + " > COST[" + (k +1) + "] -> " + cost.get(cost.size() -1) + " -- "); 
+					System.out.print(String.format("%03d", (k+1)) + " > COST: " + cost.get(cost.size() -1) + " - "); 
 
 					masterContext.setXMean(Utils.calculateMean(masterContext.getXOptimal(), slaveAverageOptimalValue, masterContext.getN())); 	//Take Mean
 					masterContext.setU(Utils.vectorAdd(masterContext.getu(), masterContext.getxMean())); //Update u
@@ -373,7 +373,7 @@ public class EVADMMBsp extends BSP<LongWritable, Text, IntWritable, Text, Text>{
 		double eps_dual = (Math.sqrt(xMean.length * N) * 1) + (0.001 * Utils.calculateNorm(Utils.scalerMultiply(u, EVADMMBsp.RHO)));
 		
 		//Utils.PrintArray(u);
-		System.out.print("RHO: " +EVADMMBsp.RHO  + " R_NORM: " + r_norm + " -- eps_pri: " + eps_pri + " -- s_norm: " + s_norm + " -- eps_dual: " + eps_dual);
+		System.out.print("RHO: " +EVADMMBsp.RHO  + " R_NORM: " + r_norm + " eps_pri: " + eps_pri + " s_norm: " + s_norm + " eps_dual: " + eps_dual);
 		System.out.println("");
 		
 		if(r_norm <= eps_pri && s_norm <= eps_dual || (cost_variance <= 1e-9))
