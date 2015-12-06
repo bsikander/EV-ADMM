@@ -577,6 +577,7 @@ public class Utils {
 		{
 			for(int j=0; j < mat.length; j++)
 			{
+				//result[count] = Utils.roundDouble(mat[j][i] + vec[j],4);
 				result[count] = mat[j][i] + vec[j];
 				count++;
 			}
@@ -651,6 +652,15 @@ public class Utils {
 			System.out.print(input[i] + " ");
 		}
 		System.out.println("=====END=====");
+	}
+	
+	public static double compressVector(double[] input)
+	{
+		double sum=0;
+		for(double d: input)
+			sum+=d;
+		
+		return sum;
 	}
 	
 	private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();

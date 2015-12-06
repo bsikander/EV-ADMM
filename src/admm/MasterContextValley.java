@@ -1,7 +1,9 @@
 package admm;
 
 import java.io.FileNotFoundException;
+
 import org.apache.hadoop.conf.Configuration;
+
 import ilog.concert.IloException;
 
 /*
@@ -80,6 +82,14 @@ public class MasterContextValley {
 		
 		//this.setXOptimal( Utils.calculateVectorSubtraction(rhoMultiplyK, rhoMultiplyD ));
 		this.setXOptimal( Utils.vectorAdd(rhoMultiplyK, rhoMultiplyD ));
+		
+//		/* TODO: REMOVE THIS*/
+//		double sum3 = 0;
+//		for(double d: this.getXOptimal())
+//			sum3+=d;
+//		
+//		System.out.println("X MASTER SUM -> " + sum3);
+		
 		
 		//cost= norm(D-x)^2;
 		double cost = Utils.calculateNorm(Utils.vectorAdd(masterData.getD(), Utils.scalerMultiply(this.getXOptimal(), -1)));
