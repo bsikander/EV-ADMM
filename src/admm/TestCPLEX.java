@@ -36,7 +36,7 @@ import ilog.cplex.*;
 public class TestCPLEX {
 public static void main(String[] args) throws IloException, IOException {
 
-	writeSlaveFileWithoutFramework();
+	writeSlaveFileWithoutFrameworkOptimized();
 	System.out.println("END");;
 //	int i = 0;
 //	while(i < 10000000)
@@ -136,26 +136,26 @@ private static void writeSlaveFile() throws IOException {
 		 data += "]|" + sdata.getR() + "|1|0.0125|0.01" + "|["; //]|R_value|gamma_value|alpha_value|rho|[
 		 
 		 
-		 for(double d: sdata.getSmax()) {
-			 data += String.valueOf(d) + ",";
-		 }
-		 data = data.substring(0,data.length() - 1);
-		 data += "]|[";
-		 
-		 for(double d: sdata.getSmin()) {
-			 data += String.valueOf(d) + ",";
-		 }
+//		 for(double d: sdata.getSmax()) {
+//			 data += String.valueOf(d) + ",";
+//		 }
+//		 data = data.substring(0,data.length() - 1);
+//		 data += "]|[";
+//		 
+//		 for(double d: sdata.getSmin()) {
+//			 data += String.valueOf(d) + ",";
+//		 }
 		 data = data.substring(0,data.length() - 1);
 		 data += "]|";
 		 
-		 for(double[] arr: sdata.getB()) {
-			 data += "[";
-			 for(double d : arr) {
-				 data += String.valueOf(d) + ",";
-			 }
-			 data = data.substring(0,data.length() - 1);
-			 data += "]";
-		 }
+//		 for(double[] arr: sdata.getB()) {
+//			 data += "[";
+//			 for(double d : arr) {
+//				 data += String.valueOf(d) + ",";
+//			 }
+//			 data = data.substring(0,data.length() - 1);
+//			 data += "]";
+//		 }
 		 
 		 data +="\n";
 		 
@@ -167,7 +167,7 @@ private static void writeSlaveFileWithoutFramework() throws IOException {
 	SlaveData sdata;
 	String data = "";
 	//xi_max,xi_min,A,R_value,gamma,alpha,rho,smax,smin,B
-	for(int i =1; i <= 3; i++) {
+	for(int i =1; i <= 100; i++) {
 		 sdata = LoadSlaveDataFromMatFile("/Users/raja/Documents/Thesis/ADMM_matlab/Valley_Filling_1.1/Jose/EVs/home/" + i + ".mat");
 		 
 		 String D = "";
@@ -188,34 +188,101 @@ private static void writeSlaveFileWithoutFramework() throws IOException {
 		 data = data.substring(0,data.length() - 1);
 		 data += "]|" + sdata.getR() + "|[" ; //]|R_value|gamma_value|alpha_value|rho|[
 		 
-		 
-		 for(double d: sdata.getSmax()) {
-			 data += String.valueOf(d) + ",";
-		 }
-		 data = data.substring(0,data.length() - 1);
-		 data += "]|[";
-		 
-		 for(double d: sdata.getSmin()) {
-			 data += String.valueOf(d) + ",";
-		 }
-		 data = data.substring(0,data.length() - 1);
-		 data += "]|";
-		 
-		 for(double[] arr: sdata.getB()) {
-			 data += "[";
-			 for(double d : arr) {
-				 data += String.valueOf(d) + ",";
-			 }
-			 data = data.substring(0,data.length() - 1);
-			 data += "]";
-		 }
+		 //REMOVED BECAUSE THEY WERE NOT NEEDED
+//		 for(double d: sdata.getSmax()) {
+//			 data += String.valueOf(d) + ",";
+//		 }
+//		 data = data.substring(0,data.length() - 1);
+//		 data += "]|[";
+//		 
+//		 for(double d: sdata.getSmin()) {
+//			 data += String.valueOf(d) + ",";
+//		 }
+//		 data = data.substring(0,data.length() - 1);
+//		 data += "]|";
+//		 
+//		 for(double[] arr: sdata.getB()) {
+//			 data += "[";
+//			 for(double d : arr) {
+//				 data += String.valueOf(d) + ",";
+//			 }
+//			 data = data.substring(0,data.length() - 1);
+//			 data += "]";
+//		 }
 		 
 		 data +="\n";
 		 
 	}
-	writeFile(data,"EVs_new1.txt");
+	writeFile(data,"EVs_10.txt");
 }
 
+
+private static void writeSlaveFileWithoutFrameworkOptimized() throws IOException {
+	int totalEVs = 5000;
+	
+	SlaveData sdata;
+	PrintWriter writer = new PrintWriter("EVs_" + totalEVs + ".txt", "UTF-8");
+	
+	
+	for(int i =1; i <= totalEVs; i++) {
+		
+		sdata = LoadSlaveDataFromMatFile("/Users/raja/Documents/Thesis/ADMM_matlab/Valley_Filling_1.1/Jose/EVs/home/" + i + ".mat");
+		 
+		 String D = "";
+		 
+		 for(double d: sdata.getD())
+		 {
+			 D += d + ",";
+		 }
+		 
+		 writer.print(i - 1);
+		 writer.print("|[");
+		 writer.print( D.substring(0,D.length() - 1));
+		 writer.print("]|[");
+		 
+		 String AData = "";
+		 for(double d: sdata.getA()) {
+			 AData += String.valueOf(d) + ",";
+		 }
+		 writer.print(AData.substring(0,AData.length() - 1));
+		 writer.print( "]|" + sdata.getR() + "") ; //]|R_value|gamma_value|alpha_value|rho|[
+		 
+		 
+//		 String SMaxData="";
+//		 for(double d: sdata.getSmax()) {
+//			 SMaxData += String.valueOf(d) + ",";
+//		 }
+//		 writer.print(SMaxData.substring(0,SMaxData.length() - 1));
+//		 writer.print("]|[");
+//		 
+//		 
+//		 String SMinData ="";
+//		 for(double d: sdata.getSmin()) {
+//			 SMinData += String.valueOf(d) + ",";
+//		 }
+//		 writer.print(SMinData.substring(0,SMinData.length() - 1));
+//		 writer.print("]|");
+//
+//		 for(double[] arr: sdata.getB()) {
+//			 writer.print("[");
+//
+//			 StringBuilder BData = new StringBuilder();
+//			 for(double d : arr) {
+//				 BData.append(String.valueOf(d) + ",");
+//			 }
+//			 writer.print(BData.substring(0,BData.length() - 1));
+//			 writer.print("]");
+//		 }
+		 
+		 //writer.print(BData);
+		 
+		 
+		 writer.println();
+		 
+	}
+	writer.close();
+	//writeFile(data.toString(),"EVs_10.txt");
+}
 
 private static void writeMasterFile() throws FileNotFoundException, UnsupportedEncodingException
 {
@@ -341,10 +408,10 @@ public static SlaveData LoadSlaveDataFromMatFile(String filePath) throws IOExcep
 		SlaveData context = new SlaveData(
 										dArray[0], 
 										AArray[0], 
-										BArray, 
-										RArray[0][0],
-										Utils.getSingleArrayFromDouble(SmaxArray),
-										Utils.getSingleArrayFromDouble(SminArray)
+										//BArray, 
+										RArray[0][0]//,
+										//Utils.getSingleArrayFromDouble(SmaxArray),
+										//Utils.getSingleArrayFromDouble(SminArray)
 										//Utils.getSingleArrayFromDouble(x_optimal)
 										);
 		

@@ -167,10 +167,10 @@ public class Utils {
 			SlaveData context = new SlaveData(
 											dArray[0], 
 											AArray[0], 
-											BArray, 
-											RArray[0][0],
-											getSingleArrayFromDouble(SmaxArray),
-											getSingleArrayFromDouble(SminArray)
+											//BArray, 
+											RArray[0][0]//,
+											//getSingleArrayFromDouble(SmaxArray),
+											//getSingleArrayFromDouble(SminArray)
 											);
 			
 			matfilereader = null;

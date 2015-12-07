@@ -37,8 +37,8 @@ public class Main {
 		job.setJarByClass(EVADMMBsp.class);
 		job.setJobName("EVADMM");
 	
-		job.set(Constants.EVADMM_MAX_ITERATIONS, "60");
-		job.set(Constants.EVADMM_EV_COUNT, "3");
+		job.set(Constants.EVADMM_MAX_ITERATIONS, "400");
+		job.set(Constants.EVADMM_EV_COUNT, "1000");
 		job.set(Constants.EVADMM_OUTPUT_PATH, "/Users/raja/Documents/workspace/Hama-EVADMM/output/");
 		job.set(Constants.EVADMM_AGGREGATOR_PATH, "/Users/raja/Documents/Thesis/ADMM_matlab/Aggregator/aggregator.mat");
 		job.set(Constants.EVADMM_EV_PATH, "/Users/raja/Documents/Thesis/ADMM_matlab/Valley_Filling_1.1/Jose/EVs/home/");
@@ -46,7 +46,7 @@ public class Main {
 		job.set(Constants.EVADMM_BSP_TASK, "3");
 		
 		//String inputPath = "/Users/raja/Documents/workspace/Hama-EVADMM/empty.txt,/Users/raja/Documents/workspace/Hama-EVADMM/EVs_new1.txt";
-		String inputPath = "/Users/raja/Documents/workspace/Hama-EVADMM/empty.txt,/Users/raja/Documents/workspace/Hama-EVADMM/EVs_new1.txt";
+		String inputPath = "/Users/raja/Documents/workspace/Hama-EVADMM/empty.txt,/Users/raja/Documents/workspace/Hama-EVADMM/EVs_1000.txt";
 		FileInputFormat.addInputPaths(job, inputPath);
 		job.setInputFormat(TextInputFormat.class);
 		
