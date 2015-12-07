@@ -21,11 +21,11 @@ import gurobi.*;
 
 public class MasterContext {
 	private int N_EV;
-	private String chargeStrategy = "home";
+	//private String chargeStrategy = "home";
 	private double rho;
 	private int T;
 	private double eps_pri;
-	private double eps_dual;
+	//private double eps_dual;
 	private double[] xa_min;
 	private double[] xa_max;
 	private MasterData masterData;

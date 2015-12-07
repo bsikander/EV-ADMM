@@ -35,13 +35,14 @@ public class SlaveContext {
 	/*
 	 * The default constructor which loads the EV from file system.
 	 */
-	public SlaveContext(String evString, double[] xMean, double[] u, int currentEVNo, double rhoValue, boolean isFirstIteration, BSPPeer<LongWritable, Text,IntWritable, Text, Text> peer, double delta, double[] oldXOptimal) throws IOException
+	public SlaveContext(SlaveData slaveData, double[] xMean, double[] u, int currentEVNo, double rhoValue, boolean isFirstIteration, BSPPeer<LongWritable, Text,IntWritable, Text, Text> peer, double delta, double[] oldXOptimal) throws IOException
 	{	
 		//firstIteration = isFirstIteration;
 		//conf = peer.getConfiguration();
 		
 		//slaveData = Utils.LoadSlaveDataFromMatFile(fileName, peer);
-		slaveData = new SlaveData(evString);
+		//this.slaveData = new SlaveData(evString);
+		this.slaveData = slaveData;
 		
 		if(!isFirstIteration)
 			this.x = oldXOptimal;
@@ -177,10 +178,10 @@ public class SlaveContext {
 	/*
 	 * Getter to access the current EV being processed.
 	 */
-	public int getCurrentEVNo()
-	{
-		return this.currentEVNo;
-	}
+//	public int getCurrentEVNo()
+//	{
+//		return this.currentEVNo;
+//	}
 	
 	/*
 	 * Getter for accessing xOptimal.

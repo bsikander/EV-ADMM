@@ -167,7 +167,7 @@ private static void writeSlaveFileWithoutFramework() throws IOException {
 	SlaveData sdata;
 	String data = "";
 	//xi_max,xi_min,A,R_value,gamma,alpha,rho,smax,smin,B
-	for(int i =1; i <= 10; i++) {
+	for(int i =1; i <= 3; i++) {
 		 sdata = LoadSlaveDataFromMatFile("/Users/raja/Documents/Thesis/ADMM_matlab/Valley_Filling_1.1/Jose/EVs/home/" + i + ".mat");
 		 
 		 String D = "";
@@ -177,7 +177,8 @@ private static void writeSlaveFileWithoutFramework() throws IOException {
 			 D += d + ",";
 			//x_max += d * 4 + ",";
 		 }
-		 data += "[";
+		 data += (i - 1);
+		 data += "|[";
 		 data += D.substring(0,D.length() - 1);
 		 data += "]|[";
 		 
@@ -212,7 +213,7 @@ private static void writeSlaveFileWithoutFramework() throws IOException {
 		 data +="\n";
 		 
 	}
-	writeFile(data,"EVs_new.txt");
+	writeFile(data,"EVs_new1.txt");
 }
 
 

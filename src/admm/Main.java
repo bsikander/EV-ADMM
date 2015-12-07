@@ -9,7 +9,9 @@ import org.apache.hama.HamaConfiguration;
 import org.apache.hama.bsp.BSPJob;
 import org.apache.hama.bsp.BSPJobClient;
 import org.apache.hama.bsp.ClusterStatus;
+import org.apache.hama.bsp.FileInputFormat;
 import org.apache.hama.bsp.NullInputFormat;
+import org.apache.hama.bsp.TextInputFormat;
 
 /*
  * The main entry point of the algorithm. This function takes multiple command line arguments to change the behavior of the algorithm.
@@ -36,12 +38,19 @@ public class Main {
 		job.setJobName("EVADMM");
 	
 		job.set(Constants.EVADMM_MAX_ITERATIONS, "60");
-		job.set(Constants.EVADMM_EV_COUNT, "10");
+		job.set(Constants.EVADMM_EV_COUNT, "3");
 		job.set(Constants.EVADMM_OUTPUT_PATH, "/Users/raja/Documents/workspace/Hama-EVADMM/output/");
 		job.set(Constants.EVADMM_AGGREGATOR_PATH, "/Users/raja/Documents/Thesis/ADMM_matlab/Aggregator/aggregator.mat");
 		job.set(Constants.EVADMM_EV_PATH, "/Users/raja/Documents/Thesis/ADMM_matlab/Valley_Filling_1.1/Jose/EVs/home/");
 		job.set(Constants.EVADMM_RHO, "0.01");
-		job.set(Constants.EVADMM_BSP_TASK, "2");
+		job.set(Constants.EVADMM_BSP_TASK, "3");
+		
+		//String inputPath = "/Users/raja/Documents/workspace/Hama-EVADMM/empty.txt,/Users/raja/Documents/workspace/Hama-EVADMM/EVs_new1.txt";
+		String inputPath = "/Users/raja/Documents/workspace/Hama-EVADMM/empty.txt,/Users/raja/Documents/workspace/Hama-EVADMM/EVs_new1.txt";
+		FileInputFormat.addInputPaths(job, inputPath);
+		job.setInputFormat(TextInputFormat.class);
+		
+		job.set(Constants.EVADMM_INPUT_PATH, inputPath);
 		
 		if(args.length >=7)
 			job.set(Constants.EVADMM_RHO, args[6]);
@@ -59,10 +68,11 @@ public class Main {
 			job.set(Constants.EVADMM_AGGREGATOR_PATH, args[0]);
 
 		job.setNumBspTask (Integer.parseInt(job.get(Constants.EVADMM_BSP_TASK)) );
+		
 		BSPJobClient jobClient = new BSPJobClient(conf);
 		ClusterStatus cluster = jobClient.getClusterStatus(true);
 		System.out.println("Max bsp task:" + cluster.getMaxTasks());
-		job.setInputFormat(NullInputFormat.class);
+		//job.setInputFormat(NullInputFormat.class);
 		job.setOutputPath(new Path(job.get(Constants.EVADMM_OUTPUT_PATH)));
 		System.out.println("Starting the job");
 		

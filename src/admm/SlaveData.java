@@ -64,7 +64,7 @@ public class SlaveData {
 		return this.Smin;
 	}
 	
-	public int getEvNo()
+	public int getEVNo()
 	{
 		return this.evNo;
 	}
