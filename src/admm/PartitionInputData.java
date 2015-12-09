@@ -69,10 +69,6 @@ public class PartitionInputData {
             	tempFiles.get(i).delete();
             }
             data.close();
-            
-            
-            //TO DELETE A FILE FROM HDFS
-            //fs.delete(p, true);
 		}
 		catch(Exception e) {
 			e.printStackTrace();
