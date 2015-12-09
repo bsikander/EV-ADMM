@@ -118,7 +118,7 @@ public class Utils {
 	/*
 	 * This function reads and returns the file it reads from HDFS.
 	 */
-	private static File getFileFromHDFS(Configuration conf, String filePath) throws IOException, URISyntaxException {
+	public static File getFileFromHDFS(Configuration conf, String filePath) throws IOException, URISyntaxException {
 		FileSystem fs = getFSObject(conf);
 		FSDataInputStream in = fs.open(new Path(filePath));
 		File tempMatFile = stream2file(in, filePath.split("/")[filePath.split("/").length - 1]);

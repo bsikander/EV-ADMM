@@ -1,10 +1,12 @@
 package admm;
 
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.PrintWriter;
@@ -19,9 +21,11 @@ import org.apache.commons.math3.linear.MatrixUtils;
 import org.apache.commons.math3.linear.RealMatrix;
 import org.apache.commons.math3.linear.SingularValueDecomposition;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.io.Text;
+import org.apache.hama.HamaConfiguration;
 import org.apache.hama.bsp.BSPPeer;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jackson.type.TypeReference;
@@ -35,10 +39,41 @@ import ilog.concert.*;
 import ilog.cplex.*;
 public class TestCPLEX {
 public static void main(String[] args) throws IloException, IOException {
+	
+	//writeSlaveFileWithoutFrameworkOptimized();
+	
+	HamaConfiguration conf = new HamaConfiguration();
+	PartitionInputData.partitionData(new Path("/Users/raja/Documents/workspace/Hama-EVADMM/EVs_10.txt"), 2, 5, conf, "/Users/raja/Documents/workspace/Hama-EVADMM/partition/");
+	
+	
+	
+	
+//	File tempFile = File.createTempFile("def1", ".txt");
+//	File tempFile1 = File.createTempFile("def2", ".txt");
+//	tempFile.deleteOnExit();
+//	tempFile1.deleteOnExit();
+//	
+//	//tempFiles.add(tempFile);
+//	
+//	BufferedWriter writer = new BufferedWriter(new FileWriter(tempFile));
+//	BufferedWriter writer1 = new BufferedWriter(new FileWriter(tempFile1));
+//	
+//	writer.write("this is test");
+//	writer1.write("this is test");
+//	
+//	writer.close();
+//	writer1.close();
+	
+	System.out.println("END");
 
-	writeSlaveFileWithoutFrameworkOptimized();
-	System.out.println("END");;
-//	int i = 0;
+	
+	
+	
+	
+	
+	
+	
+	//	int i = 0;
 //	while(i < 10000000)
 //	{
 //		double[] tes1 = new double[100];
