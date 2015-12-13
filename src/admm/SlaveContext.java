@@ -63,7 +63,7 @@ public class SlaveContext {
 	}
 	
 	/*
-	 * This function solves the model using IBM CPLEX and returns the cost. The key for a sucessful long run is that you donot
+	 * This function solves the model using IBM CPLEX and returns the cost. The key for a successful long run is that you do not
 	 * create the CPLEX instances again and again because the objects are not cleaned up by GC. So, always use clearModel to
 	 * clear out the old model and create a new one and reuse the same cplex object again and again.
 	 */
@@ -123,12 +123,13 @@ public class SlaveContext {
 //			cplex.exportModel("EV_" + currentEVNo + ".lp");
 		
 		if ( cplex.solve() ) {
-			x_optimal = new double[x_i.length];
+			//x_optimal = new double[x_i.length];
 			
-			for(int u=0; u< x_i.length; u++)
-			{
-				x_optimal[u] = cplex.getValues(x_i)[u];
-			}
+//			for(int u=0; u< x_i.length; u++)
+//			{
+//				x_optimal[u] = cplex.getValues(x_i)[u];
+//			}
+			x_optimal = cplex.getValues(x_i);
 			
 			//Calculate x_i^k - x_i^k-1
 			xOptimalDifference = Utils.calculateVectorSubtraction(x_optimal, this.x);

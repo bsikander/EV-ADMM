@@ -85,6 +85,7 @@ public class EVADMMBsp extends BSP<LongWritable, Text, IntWritable, Text, Text>{
 		if(peer.getPeerName().equals(this.masterTask)) //The master task
 		{	
 			masterContext = new MasterContextValley(AGGREGATOR_PATH,EV_COUNT,RHO, peer.getConfiguration());
+			System.out.println("DELTA ---> " + masterContext.getMasterData().getDelta());
 			
 			xsum = new double[masterContext.getT()];
 			cost = new ArrayList<Double>();
@@ -113,6 +114,8 @@ public class EVADMMBsp extends BSP<LongWritable, Text, IntWritable, Text, Text>{
 						sendxMeanAndUToSlaves(peer, obj, peer.getPeerName(peerCount));
 						peerCount++;
 					}
+//					Utils.PrintArray(masterContext.getu());
+//					Utils.PrintArray(masterContext.getxMean());
 					
 					peer.sync(); //Send messages which are equal to peer.getNumPeers - 1 
 					peer.sync();
@@ -121,16 +124,24 @@ public class EVADMMBsp extends BSP<LongWritable, Text, IntWritable, Text, Text>{
 					slaveAverageOptimalValue = result.averageXReceived();
 
 					xsum = Utils.calculateEVSum(result.xsum());
+//					System.out.println("------- XSUM ----");
+//					Utils.PrintArray(xsum);
+//					System.out.println("------- XSUM END----");
 					
 					double[] masterXOptimalOld = masterContext.getXOptimal();
 					double[] oldXMean = masterContext.getxMean(); 
 					masterContext.optimize(masterContext.getXOptimal(),k);
 					
 					double costtemp = Utils.calculateNorm( Utils.vectorAdd(masterContext.getMasterData().getD(), xsum) );
-				    costtemp = Math.round ((costtemp * costtemp) * 1000000000.0) / 1000000000.0; //round off to 3 decimal places.
-				    cost.add(costtemp);
+				    
+				    //costtemp = Math.round ((costtemp * costtemp) * 1000000000.0) / 1000000000.0; //round off to 3 decimal places.
+					//cost.add(costtemp);
+				    //costtemp = ((costtemp * costtemp) * 1000000000.0) / 1000000000.0; //round off to 3 decimal places.
+				    
+					cost.add(costtemp*costtemp);
 					
-					System.out.print(String.format("%03d", (k+1)) + " > COST -> " + String.format("%.9f",cost.get(cost.size() -1))); 
+					System.out.print(String.format("%03d", (k+1)) + " > COST -> " + String.format("%.9f",cost.get(cost.size() -1)) );
+					//System.out.println(String.format("%.9f",cost.get(cost.size() -1)));
 
 					masterContext.setXMean(Utils.calculateMean(masterContext.getXOptimal(), slaveAverageOptimalValue, masterContext.getN())); 	//Take Mean
 					masterContext.setU(Utils.vectorAdd(masterContext.getu(), masterContext.getxMean())); //Update u
@@ -220,6 +231,9 @@ public class EVADMMBsp extends BSP<LongWritable, Text, IntWritable, Text, Text>{
 							
 							optimalEVValues.put(slaveData.getEVNo(), slaveContext.getXOptimalSlave());
 							
+							//Utils.PrintArray(slaveContext.getXOptimalSlave());
+							
+							//System.out.println(">> Slave sending EV No -> " + slaveData.getEVNo());
 							
 							NetworkObjectSlave slave = new NetworkObjectSlave(slaveContext.getXOptimalSlave(), slaveData.getEVNo(), slaveContext.getXOptimalDifference(), cost);
 							sendXOptimalToMaster(peer, slave);
@@ -267,6 +281,8 @@ public class EVADMMBsp extends BSP<LongWritable, Text, IntWritable, Text, Text>{
 		DEFAULT_ADMM_ITERATIONS_MAX = Integer.parseInt(peer.getConfiguration().get(Constants.EVADMM_MAX_ITERATIONS));
 		RHO = Double.parseDouble(peer.getConfiguration().get(Constants.EVADMM_RHO));
 		EV_COUNT = Integer.parseInt(peer.getConfiguration().get(Constants.EVADMM_EV_COUNT));
+		
+		System.out.println(peer.getPeerName() + " > PID ID: " + Main.getPidId());
 	}
 	
 	/*
@@ -316,6 +332,60 @@ public class EVADMMBsp extends BSP<LongWritable, Text, IntWritable, Text, Text>{
 		
 		double cost_variance = 0;
 		
+		/* TODO: REMOVE THIS SECTION
+		double sum = 0;
+		for(double d: xMean)
+			sum+=d;
+		
+		double sum1 = 0;
+		for(double d: xMean_old)
+			sum1+=d;
+
+		double sum2 = 0;
+		for(double d: s)
+			sum2+=d;
+		
+		double sum3 = 0;
+		for(double d: Utils.scaleVector(xMean, N))
+			sum3+=d;
+		
+		double sum4 = 0;
+		for(int i = 0; i < xMatrix[0].length; i++)
+			for(int j =0 ; j < xMatrix.length; j++)
+				sum4+=xMatrix[j][i];
+		
+		double sumMasterOptimal = 0;
+		//for(int i = 0; i < xMatrix[0].length; i++)
+			for(int j =0 ; j < xMatrix.length; j++)
+			{
+				sumMasterOptimal += xMatrix[j][xMatrix[0].length - 1];
+			}
+		
+		double sum5 = 0;
+		for(int i = 0; i < xMatrix[0].length-1; i++)
+			for(int j =0 ; j < xMatrix.length; j++)
+				sum5+=xMatrix[j][i];
+		
+		double sum6 = 0;
+		for(int i = 0; i < xDifferenceMatrix[0].length; i++)
+			for(int j =0 ; j < xDifferenceMatrix.length; j++)
+				sum6+=xDifferenceMatrix[j][i];
+		
+		double sum7 = 0;
+		for(double d: xMeanOld_xMean)
+			sum7+=d;
+		
+		double sum8 = 0;
+		for(double d: result)
+			sum8+=d;
+		
+		double sumU=0;
+		for(double d: u)
+			sumU+=d;
+		
+		
+END*/		
+		
 		if(currentIteration < 5)
 			cost_variance = 1;
 		else
@@ -336,19 +406,32 @@ public class EVADMMBsp extends BSP<LongWritable, Text, IntWritable, Text, Text>{
 		double eps_dual = (Math.sqrt(xMean.length * N) * 1) + (0.001 * Utils.calculateNorm(Utils.scalerMultiply(u, EVADMMBsp.RHO)));
 		
 		//Utils.PrintArray(u);
-		System.out.print(" RHO: " +EVADMMBsp.RHO  + " R_NORM: " + r_norm + " eps_pri: " + eps_pri + " s_norm: " + s_norm + " eps_dual: " + eps_dual);
-		System.out.println("");
 		
+		//Uncomment
+		System.out.print(" RHO: " +EVADMMBsp.RHO  + " R_NORM: " + r_norm + " eps_pri: " + eps_pri + " s_norm: " + s_norm + " eps_dual: " + eps_dual);
+		
+		
+		//System.out.println("RESULT -> " + sum8 + " X -> " + sum4 +" X Without -> " + sum5 +" XDiffSUM -> " + sum6 + " XMEANOLD-XMEAN-> " + sum7 + "Xmean -> " + sum + "  Xmeanold -> " + sum1 + "  S -> " + sum2 + "  R -> " + sum3);
+		
+		//Uncomment
+		System.out.println("");
+//		System.out.println(" Total X -> " + sum4 + " Master X->" + sumMasterOptimal + " EV_X -> " + sum5 +" XDiffSUM -> " + sum6 +  " Xmean -> " + sum + " U -> " + sumU +"  Xmeanold -> " + sum1 + "  S -> " + sum2 + "  R -> " + sum3);
+//		System.out.println("");
+		
+		//if(r_norm <= eps_pri && s_norm <= eps_dual || (cost_variance <= 1e-8))
 		if(r_norm <= eps_pri && s_norm <= eps_dual || (cost_variance <= 1e-9))
 			return true;
 		
-		double lambda = 0.1;
-		double mu = 0.1;
-		double vold = v;
-		v = ((EVADMMBsp.RHO * (r_norm/s_norm)) -1);
-		EVADMMBsp.RHO =  EVADMMBsp.RHO * Math.exp( (lambda* v) + (mu*(v-vold)) );
+//		double lambda = 0.1;
+//		double mu = 0.1;
+//		double vold = v;
+//		v = ((EVADMMBsp.RHO * (r_norm/s_norm)) -1);
+//		EVADMMBsp.RHO =  EVADMMBsp.RHO * Math.exp( (lambda* v) + (mu*(v-vold)) );
+//		
+//		masterContext.setRho(EVADMMBsp.RHO);
 		
-		masterContext.setRho(EVADMMBsp.RHO);
+		//TODO: REMOVE THIS
+		masterContext.setRho(0.01);
 				
 		//System.out.println("<><<><><><<<>>>>> New RHO: " + EVADMMBsp.RHO);
 		
@@ -407,6 +490,8 @@ public class EVADMMBsp extends BSP<LongWritable, Text, IntWritable, Text, Text>{
 			slave = Utils.jsonToNetworkSlave(receivedJson.toString());
 			averageXReceived =  Utils.vectorAdd(averageXReceived, slave.getXi());
 			cost = cost + slave.getCost();
+			
+			//System.out.println(">> Master received EV No -> " + slave.getEVId());
 			
 			int i = 0;
 			for(double d: slave.getXiDifference()) {

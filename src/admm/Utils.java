@@ -12,6 +12,7 @@ import java.util.List;
 
 import org.apache.commons.math3.linear.MatrixUtils;
 import org.apache.commons.math3.linear.RealMatrix;
+import org.apache.commons.math3.linear.RealVector;
 import org.apache.commons.math3.linear.SingularValueDecomposition;
 import org.apache.commons.math3.stat.descriptive.moment.Variance;
 import org.apache.hadoop.conf.Configuration;
@@ -606,12 +607,17 @@ public class Utils {
 	
 	public static double calculateNorm(double[] vec)
 	{
-		double result = 0.0;
-		for(int i =0; i< vec.length;i++) {
-			result += (vec[i]*vec[i]);
-		}
+		RealVector v = MatrixUtils.createRealVector(vec);
+		//System.out.println(">>>> Norm: " + v.getNorm() + " -- L1 Norm: " + v.getL1Norm() + " -- Inf Norm: " + v.getLInfNorm());
+		//return v.getL1Norm();
+		return v.getNorm();
 		
-		return Math.sqrt(result);
+//		double result = 0.0;
+//		for(int i =0; i< vec.length;i++) {
+//			result += (vec[i]*vec[i]);
+//		}
+//		
+//		return Math.sqrt(result);
 	}
 	
 	public static double calculateNorm(double[][] mat)
@@ -648,7 +654,9 @@ public class Utils {
 		System.out.println("=====Priting Array=====");
 		for(int i =0; i < input.length; i++)
 		{		
-			System.out.print(input[i] + " ");
+			//System.out.print(input[i] + " ");
+			System.out.print(String.format("%.13f",input[i]) + " ");
+			
 		}
 		System.out.println("=====END=====");
 	}

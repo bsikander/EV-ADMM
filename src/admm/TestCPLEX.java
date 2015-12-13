@@ -40,10 +40,10 @@ import ilog.cplex.*;
 public class TestCPLEX {
 public static void main(String[] args) throws IloException, IOException {
 	
-	//writeSlaveFileWithoutFrameworkOptimized();
+	writeSlaveFileWithoutFrameworkOptimized();
 	
-	HamaConfiguration conf = new HamaConfiguration();
-	PartitionInputData.partitionData(new Path("/Users/raja/Documents/workspace/Hama-EVADMM/EVs_10.txt"), 2, 5, conf, "/Users/raja/Documents/workspace/Hama-EVADMM/partition/");
+	//HamaConfiguration conf = new HamaConfiguration();
+	//PartitionInputData.partitionData(new Path("/Users/raja/Documents/workspace/Hama-EVADMM/EVs_10.txt"), 2, 5, conf, "/Users/raja/Documents/workspace/Hama-EVADMM/partition/");
 	
 	
 	
@@ -253,7 +253,7 @@ private static void writeSlaveFileWithoutFramework() throws IOException {
 
 
 private static void writeSlaveFileWithoutFrameworkOptimized() throws IOException {
-	int totalEVs = 5000;
+	int totalEVs = 20000;
 	
 	SlaveData sdata;
 	PrintWriter writer = new PrintWriter("EVs_" + totalEVs + ".txt", "UTF-8");

@@ -20,7 +20,9 @@ public class MasterDataValley {
 		Utils.PrintArray(D);
 		System.out.println("Demand Array ENDnd");
 		
-		this.delta = Utils.calculateMean(this.price) / Utils.calculateMean(D);	//Equation to calculate alpha is different in valley
+//		this.delta = Utils.calculateMean(this.price) / Utils.calculateMean(D);	//Equation to calculate alpha is different in valley
+//		System.out.println("Price Mean --> " + Utils.calculateMean(this.price));
+//		System.out.println("D Mean --> " + Utils.calculateMean(D));
 	}
 	
 	/*
@@ -36,6 +38,9 @@ public class MasterDataValley {
 	public void setD(double[] d)
 	{
 		this.D = d;
+		this.delta = Utils.calculateMean(this.price) / Utils.calculateMean(this.D);	//Equation to calculate alpha is different in valley
+		System.out.println("Price Mean --> " + Utils.calculateMean(this.price));
+		System.out.println("D Mean --> " + Utils.calculateMean(D));
 	}
 	
 	/*

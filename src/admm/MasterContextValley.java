@@ -60,6 +60,10 @@ public class MasterContextValley {
 		
 		//D= D*N/1e5;  % Need to scale demand
 		masterData.setD( scaleD(masterData.getD(), N_EV + 1) );
+		
+		System.out.println(" ------> DDDD");
+		Utils.PrintArray(masterData.getD());
+		System.out.println(" ------> DDDD END");
 	}
 	
 	/*
@@ -98,7 +102,8 @@ public class MasterContextValley {
 		int index = 0;
 		for(double d : DNArray)
 		{
-			temp[index] = Utils.roundDouble( d/100000 , 4); // d/1e5
+			//temp[index] = Utils.roundDouble( d/100000 , 4); // d/1e5
+			temp[index] = d/100000 ; // d/1e5
 			index++;
 		}
 		
