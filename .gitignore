@@ -3,3 +3,5 @@ bin
 logfile_master
 logfile_slave
 /MATLAB/
+
+*.txt
