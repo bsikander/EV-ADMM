@@ -120,6 +120,8 @@ public class EVADMMBsp extends BSP<LongWritable, Text, IntWritable, Text, Text>{
 					peer.sync(); //Send messages which are equal to peer.getNumPeers - 1 
 					peer.sync();
 					
+					//long lStartTime = System.nanoTime();
+					
 					Pair<double[], double[][], Double, double[][]> result = receiveSlaveOptimalValuesAndUpdateX(peer, masterContext.getN());
 					slaveAverageOptimalValue = result.averageXReceived();
 
@@ -163,6 +165,12 @@ public class EVADMMBsp extends BSP<LongWritable, Text, IntWritable, Text, Text>{
 					}
 					
 					boolean converged = checkConvergence(xMatrix,xDifferenceMatrix, masterContext.getxMean(), oldXMean, masterContext.getN(), masterContext.getu(), cost, k);
+					
+//					long lEndTime = System.nanoTime();
+//					long difference = lEndTime - lStartTime;
+//					long milliseconds = difference/1000000;
+//					System.out.println("Elapsed milliseconds: " + milliseconds);
+//					System.out.println("Elapsed seconds: " + milliseconds/1000);
 					
 					if(converged == true) {
 						System.out.println("////////////Converged/////////");
@@ -216,6 +224,7 @@ public class EVADMMBsp extends BSP<LongWritable, Text, IntWritable, Text, Text>{
 				{
 					while(peer.readNext(key, value) != false) {
 						//Load the current input
+						
 						SlaveData slaveData = new SlaveData(value.toString());
 						
 						slaveContext = null;
@@ -227,6 +236,9 @@ public class EVADMMBsp extends BSP<LongWritable, Text, IntWritable, Text, Text>{
 						
 						try {
 							//Do optimization and write the x_optimal to mat file
+							
+							
+							
 							double cost = slaveContext.optimize(cplex);
 							
 							optimalEVValues.put(slaveData.getEVNo(), slaveContext.getXOptimalSlave());

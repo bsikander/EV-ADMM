@@ -52,7 +52,7 @@ public class SlaveContext {
 		x_optimal = new double[this.x.length];
 		rho = rhoValue;
 		
-		this.alpha = ((0.05/3600) * (15*60)) / delta;
+		//this.alpha = ((0.05/3600) * (15*60)) / delta;
 		
 		this.xi_max = Utils.scalerMultiply(this.slaveData.getD(), 4);
 		this.xi_min = Utils.scalerMultiply(this.slaveData.getD(), 0);
@@ -73,32 +73,46 @@ public class SlaveContext {
 		cplex.setOut(null);
 		
 		IloNumVar[] x_i = new IloNumVar[this.x.length];
+		IloNumExpr[] exps = new IloNumExpr[x.length];
+		IloNumExpr[] AXExpEq = new IloNumExpr[x.length];
+		
+		double[] data = subtractOldMeanU(this.x);
 		
 		for(int i = 0; i < this.x.length ; i++) {
 			x_i[i] = cplex.numVar(xi_min[i], xi_max[i]);
+			
+			exps[i] = cplex.prod(rho/2, cplex.square(cplex.sum(x_i[i], cplex.constant(data[i]))));
+			AXExpEq[i] = cplex.prod(x_i[i], this.slaveData.getA()[i]);
 		}
 		
-	    double gammaAlpha = this.gamma * this.alpha;
-		double[] data = subtractOldMeanU(this.x);
+	    //double gammaAlpha = this.gamma * this.alpha;
 		
-		IloNumExpr[] exps = new IloNumExpr[data.length];
 		
-		for(int i =0; i< data.length; i++)
-		{	
-			exps[i] = cplex.sum(cplex.prod(gammaAlpha, cplex.square(x_i[i])) ,cplex.prod(rho/2, cplex.square(cplex.sum(x_i[i], cplex.constant(data[i])))));
-		}
 		
-		IloNumExpr rightSide = cplex.sum(exps);
-		cplex.addMinimize(rightSide);
+//		for(int i =0; i< data.length; i++)
+//		{	
+//			//exps[i] = cplex.sum(cplex.prod(gammaAlpha, cplex.square(x_i[i])) ,cplex.prod(rho/2, cplex.square(cplex.sum(x_i[i], cplex.constant(data[i])))));
+//			exps[i] = cplex.prod(rho/2, cplex.square(cplex.sum(x_i[i], cplex.constant(data[i]))));
+//			
+//			AXExpEq[i] = cplex.prod(x_i[i], this.slaveData.getA()[i]);
+//		}
 		
-		IloNumExpr[] AXExpEq = new IloNumExpr[data.length];
-		
-		for(int j = 0; j < data.length ; j++ )
-		{	
-			//cplex.addEq(cplex.prod(x_i[j], this.slaveData.getA()[j]), this.slaveData.getR());
-			AXExpEq[j] = cplex.prod(x_i[j], this.slaveData.getA()[j]);
-		}
+		cplex.addMinimize(cplex.sum(exps));
 		cplex.addEq(cplex.sum(AXExpEq), this.slaveData.getR());
+		
+//		IloNumExpr rightSide = cplex.sum(exps);
+//		cplex.addMinimize(rightSide);
+//		cplex.addMinimize(cplex.sum(exps));
+//		cplex.addEq(cplex.sum(AXExpEq), this.slaveData.getR());
+		
+		//IloNumExpr[] AXExpEq = new IloNumExpr[data.length];
+		
+//		for(int j = 0; j < data.length ; j++ )
+//		{	
+//			//cplex.addEq(cplex.prod(x_i[j], this.slaveData.getA()[j]), this.slaveData.getR());
+//			AXExpEq[j] = cplex.prod(x_i[j], this.slaveData.getA()[j]);
+//		}
+		//cplex.addEq(cplex.sum(AXExpEq), this.slaveData.getR());
 		
 		//S_min <= B_i*x_i <= S_max
 		
