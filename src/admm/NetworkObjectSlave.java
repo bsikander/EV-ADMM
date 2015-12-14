@@ -21,29 +21,30 @@ public class NetworkObjectSlave implements Writable{
 	@JsonProperty("EVId")
 	private int EVId;
 	
-	@JsonProperty("x_i_difference")
-	private double[] x_i_difference;
-	
-	@JsonProperty("cost")
-	private double cost;
+//	@JsonProperty("x_i_difference")
+//	private double[] x_i_difference;
+//	
+//	@JsonProperty("cost")
+//	private double cost;
 	
 	/*
 	 * Parameterized constructor
 	 */
-	public NetworkObjectSlave(double[] x_i, int EVId, double[] x_i_difference, double cost)
+	//public NetworkObjectSlave(double[] x_i, int EVId, double[] x_i_difference, double cost)
+	public NetworkObjectSlave(double[] x_i, int EVId)
 	{
 		this.x_i = x_i;
 		this.EVId = EVId;
-		this.x_i_difference = x_i_difference;
-		this.cost = cost;
+//		this.x_i_difference = x_i_difference;
+//		this.cost = cost;
 	}
 
 	public void setNetworkObjectSlave(NetworkObjectSlave n)
 	{
 		this.x_i = n.x_i;
 		this.EVId = n.EVId;
-		this.x_i_difference = n.x_i_difference;
-		this.cost = n.cost;
+//		this.x_i_difference = n.x_i_difference;
+//		this.cost = n.cost;
 	}
 	
 	public NetworkObjectSlave()
@@ -74,15 +75,15 @@ public class NetworkObjectSlave implements Writable{
 		return this.EVId;
 	}
 	
-	@JsonProperty("cost")
-	public double getCost()
-	{
-		return this.cost;
-	}
-	
-	@JsonProperty("x_i_difference")
-	public double[] getXiDifference()
-	{
-		return this.x_i_difference;
-	}
+//	@JsonProperty("cost")
+//	public double getCost()
+//	{
+//		return this.cost;
+//	}
+//	
+//	@JsonProperty("x_i_difference")
+//	public double[] getXiDifference()
+//	{
+//		return this.x_i_difference;
+//	}
 }

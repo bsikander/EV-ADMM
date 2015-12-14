@@ -3,3 +3,9 @@ bin
 logfile_master
 logfile_slave
 /MATLAB/
+
+*.txt
+
+EVs_new.txt
+
+*.class

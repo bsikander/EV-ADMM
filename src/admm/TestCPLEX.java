@@ -253,7 +253,7 @@ private static void writeSlaveFileWithoutFramework() throws IOException {
 
 
 private static void writeSlaveFileWithoutFrameworkOptimized() throws IOException {
-	int totalEVs = 20000;
+	int totalEVs = 50000;
 	
 	SlaveData sdata;
 	PrintWriter writer = new PrintWriter("EVs_" + totalEVs + ".txt", "UTF-8");

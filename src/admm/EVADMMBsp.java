@@ -130,8 +130,8 @@ public class EVADMMBsp extends BSP<LongWritable, Text, IntWritable, Text, Text>{
 //					Utils.PrintArray(xsum);
 //					System.out.println("------- XSUM END----");
 					
-					double[] masterXOptimalOld = masterContext.getXOptimal();
-					double[] oldXMean = masterContext.getxMean(); 
+//					double[] masterXOptimalOld = masterContext.getXOptimal();
+//					double[] oldXMean = masterContext.getxMean(); 
 					masterContext.optimize(masterContext.getXOptimal(),k);
 					
 					double costtemp = Utils.calculateNorm( Utils.vectorAdd(masterContext.getMasterData().getD(), xsum) );
@@ -142,13 +142,14 @@ public class EVADMMBsp extends BSP<LongWritable, Text, IntWritable, Text, Text>{
 				    
 					cost.add(costtemp*costtemp);
 					
-					System.out.print(String.format("%03d", (k+1)) + " > COST -> " + String.format("%.9f",cost.get(cost.size() -1)) );
-					//System.out.println(String.format("%.9f",cost.get(cost.size() -1)));
+					//System.out.print(String.format("%03d", (k+1)) + " > COST -> " + String.format("%.9f",cost.get(cost.size() -1)) );
+					System.out.println(String.format("%.9f",cost.get(cost.size() -1)));
 
 					masterContext.setXMean(Utils.calculateMean(masterContext.getXOptimal(), slaveAverageOptimalValue, masterContext.getN())); 	//Take Mean
 					masterContext.setU(Utils.vectorAdd(masterContext.getu(), masterContext.getxMean())); //Update u
 
 					//Add the master optimal value in the matrix to check the convergence
+					/*
 					double[][] xDifferenceMatrix = result.xDifferenceMatrix();
 					double[][] xMatrix = result.xsum();
 					
@@ -162,9 +163,10 @@ public class EVADMMBsp extends BSP<LongWritable, Text, IntWritable, Text, Text>{
 						
 						xMatrix[time][xMatrix[0].length - 1] =  masterXOptimal[time]; //Fill the master optimal value in XMatrix
 						time++;
-					}
+					}*/
 					
-					boolean converged = checkConvergence(xMatrix,xDifferenceMatrix, masterContext.getxMean(), oldXMean, masterContext.getN(), masterContext.getu(), cost, k);
+					//boolean converged = checkConvergence(xMatrix,xDifferenceMatrix, masterContext.getxMean(), oldXMean, masterContext.getN(), masterContext.getu(), cost, k);
+					boolean converged = checkConvergence(cost, k);
 					
 //					long lEndTime = System.nanoTime();
 //					long difference = lEndTime - lStartTime;
@@ -247,7 +249,8 @@ public class EVADMMBsp extends BSP<LongWritable, Text, IntWritable, Text, Text>{
 							
 							//System.out.println(">> Slave sending EV No -> " + slaveData.getEVNo());
 							
-							NetworkObjectSlave slave = new NetworkObjectSlave(slaveContext.getXOptimalSlave(), slaveData.getEVNo(), slaveContext.getXOptimalDifference(), cost);
+							//NetworkObjectSlave slave = new NetworkObjectSlave(slaveContext.getXOptimalSlave(), slaveData.getEVNo(), slaveContext.getXOptimalDifference(), cost);
+							NetworkObjectSlave slave = new NetworkObjectSlave(slaveContext.getXOptimalSlave(), slaveData.getEVNo());
 							sendXOptimalToMaster(peer, slave);
 						} catch (IloException e) {
 							e.printStackTrace();
@@ -334,13 +337,14 @@ public class EVADMMBsp extends BSP<LongWritable, Text, IntWritable, Text, Text>{
 	 * It checks the cost variance for last 6 iterations and if it remains below 1e-9 then the algorithm stops otherwise
 	 * it continues. Currently, the algorithm is only working based on the cost varaince. 
 	 */
-	private boolean checkConvergence(double[][] xMatrix, double[][] xDifferenceMatrix, double[] xMean, double[] xMean_old, int N, double[] u, ArrayList<Double> cost, int currentIteration)
+	//private boolean checkConvergence(double[][] xMatrix, double[][] xDifferenceMatrix, double[] xMean, double[] xMean_old, int N, double[] u, ArrayList<Double> cost, int currentIteration)
+	private boolean checkConvergence( ArrayList<Double> cost, int currentIteration)
 	{	
-		double[] xMeanOld_xMean = Utils.calculateVectorSubtraction(xMean_old, xMean);
-		double[] result = Utils.addMatrixAndVector (xDifferenceMatrix, xMeanOld_xMean);
-		double[] s = Utils.scalerMultiply(result, -1*EVADMMBsp.RHO*N);
-		s_norm= Utils.calculateNorm(s);
-		r_norm = Utils.calculateNorm(Utils.scaleVector(xMean, N));
+//		double[] xMeanOld_xMean = Utils.calculateVectorSubtraction(xMean_old, xMean);
+//		double[] result = Utils.addMatrixAndVector (xDifferenceMatrix, xMeanOld_xMean);
+//		double[] s = Utils.scalerMultiply(result, -1*EVADMMBsp.RHO*N);
+//		s_norm= Utils.calculateNorm(s);
+//		r_norm = Utils.calculateNorm(Utils.scaleVector(xMean, N));
 		
 		double cost_variance = 0;
 		
@@ -408,6 +412,7 @@ END*/
 			cost_variance = Utils.getVariance(last5);
 		}
 
+		/*
 		//eps_pri= sqrt(N*T)*1 + 1e-3 * max([norm(x), norm(x(:)- repmat(xmean,N,1))]);
 		double max = Math.max( Utils.calculateNorm(xMatrix), Utils.calculateNorm( Utils.addMatrixAndVector(xMatrix, Utils.scalerMultiply(xMean, -1))) );
 		
@@ -416,22 +421,23 @@ END*/
 		
 		//eps_dual= sqrt(N*T)*1 + 1e-3 *norm(rho*u);
 		double eps_dual = (Math.sqrt(xMean.length * N) * 1) + (0.001 * Utils.calculateNorm(Utils.scalerMultiply(u, EVADMMBsp.RHO)));
-		
+		*/
 		//Utils.PrintArray(u);
 		
 		//Uncomment
-		System.out.print(" RHO: " +EVADMMBsp.RHO  + " R_NORM: " + r_norm + " eps_pri: " + eps_pri + " s_norm: " + s_norm + " eps_dual: " + eps_dual);
+		//System.out.print(" RHO: " +EVADMMBsp.RHO  + " R_NORM: " + r_norm + " eps_pri: " + eps_pri + " s_norm: " + s_norm + " eps_dual: " + eps_dual);
 		
 		
 		//System.out.println("RESULT -> " + sum8 + " X -> " + sum4 +" X Without -> " + sum5 +" XDiffSUM -> " + sum6 + " XMEANOLD-XMEAN-> " + sum7 + "Xmean -> " + sum + "  Xmeanold -> " + sum1 + "  S -> " + sum2 + "  R -> " + sum3);
 		
 		//Uncomment
-		System.out.println("");
+		//System.out.println("");
 //		System.out.println(" Total X -> " + sum4 + " Master X->" + sumMasterOptimal + " EV_X -> " + sum5 +" XDiffSUM -> " + sum6 +  " Xmean -> " + sum + " U -> " + sumU +"  Xmeanold -> " + sum1 + "  S -> " + sum2 + "  R -> " + sum3);
 //		System.out.println("");
 		
 		//if(r_norm <= eps_pri && s_norm <= eps_dual || (cost_variance <= 1e-8))
-		if(r_norm <= eps_pri && s_norm <= eps_dual || (cost_variance <= 1e-9))
+		//if(r_norm <= eps_pri && s_norm <= eps_dual || (cost_variance <= 1e-9))
+		if((cost_variance <= 1e-9))
 			return true;
 		
 //		double lambda = 0.1;
@@ -501,15 +507,15 @@ END*/
 		{
 			slave = Utils.jsonToNetworkSlave(receivedJson.toString());
 			averageXReceived =  Utils.vectorAdd(averageXReceived, slave.getXi());
-			cost = cost + slave.getCost();
+			//cost = cost + slave.getCost();
 			
 			//System.out.println(">> Master received EV No -> " + slave.getEVId());
 			
-			int i = 0;
-			for(double d: slave.getXiDifference()) {
-				s[i][slave.getEVId()] = d;
-				i++;
-			}
+			//int i = 0;
+//			for(double d: slave.getXiDifference()) {
+//				s[i][slave.getEVId()] = d;
+//				i++;
+//			}
 			
 			int j = 0;
 			for(double d: slave.getXi()) { //Store all the optimizal slave values recieved inside this array
