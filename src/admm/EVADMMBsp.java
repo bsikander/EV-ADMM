@@ -117,8 +117,13 @@ public class EVADMMBsp extends BSP<LongWritable, Text, IntWritable, Text, Text>{
 //					Utils.PrintArray(masterContext.getu());
 //					Utils.PrintArray(masterContext.getxMean());
 					
-					peer.sync(); //Send messages which are equal to peer.getNumPeers - 1 
+					peer.sync(); //Send messages which are equal to peer.getNumPeers - 1
+					
+					long startBarrierTime = System.currentTimeMillis();
+					
 					peer.sync();
+					//System.out.println(peer.getPeerName() +" > Master Wait for Slaves (MS) -> " + (System.currentTimeMillis() - startBarrierTime));
+					peer.incrementCounter(EVADMMCounters.AGGREGATED_TIME_MS_MASTER_WAIT_FOR_SLAVES,(System.currentTimeMillis() - startBarrierTime));
 					
 					//long lStartTime = System.nanoTime();
 					
@@ -212,7 +217,12 @@ public class EVADMMBsp extends BSP<LongWritable, Text, IntWritable, Text, Text>{
 			
 			while(true)
 			{
+				long startBarrierTimeSlaveSync = System.currentTimeMillis();
 				peer.sync();
+				//System.out.println(peer.getPeerName() +" > Slave Wait for Master (MS) -> " + (System.currentTimeMillis() - startBarrierTimeSlaveSync));
+				peer.incrementCounter(EVADMMCounters.AGGREGATED_TIME_MS_SLAVE_WAIT_FOR_MASTER,(System.currentTimeMillis() - startBarrierTimeSlaveSync));
+
+				long startBarrierTimeSlaveOptimization = System.currentTimeMillis();
 				
 				NetworkObjectMaster masterData = receiveMasterUAndXMeanList(peer);
 				
@@ -239,8 +249,6 @@ public class EVADMMBsp extends BSP<LongWritable, Text, IntWritable, Text, Text>{
 						try {
 							//Do optimization and write the x_optimal to mat file
 							
-							
-							
 							double cost = slaveContext.optimize(cplex);
 							
 							optimalEVValues.put(slaveData.getEVNo(), slaveContext.getXOptimalSlave());
@@ -258,6 +266,8 @@ public class EVADMMBsp extends BSP<LongWritable, Text, IntWritable, Text, Text>{
 						}
 					}
 				}
+				//System.out.println(peer.getPeerName() +" > Slave Optimization Time (MS) -> " + (System.currentTimeMillis() - startBarrierTimeSlaveOptimization));
+				peer.incrementCounter(EVADMMCounters.AGGREGATED_TIME_MS_SLAVE_OPTIMIZATION,(System.currentTimeMillis() - startBarrierTimeSlaveOptimization));
 				isFirstIteration = false;
 				
 				peer.sync(); //Send all the data
@@ -561,10 +571,9 @@ END*/
 	}
 	
 	enum EVADMMCounters {
-		Iterations,
-		TotalFilesProcessedByEVs,
-		TotalXReceivedByMaster,
-		Cost
+		AGGREGATED_TIME_MS_MASTER_WAIT_FOR_SLAVES,
+		AGGREGATED_TIME_MS_SLAVE_WAIT_FOR_MASTER,
+		AGGREGATED_TIME_MS_SLAVE_OPTIMIZATION
 	}
 	
 	/*
