@@ -403,16 +403,17 @@ public class EVADMMBsp extends BSP<LongWritable, Text, IntWritable, Text, Text>{
 			sumU+=d;
 		
 		
-END*/		
-		
+END*/	
 		if(currentIteration < 5)
 			cost_variance = 1;
 		else
 		{	
-			List<Double> costLast5Elements = cost.subList(cost.size()-6, cost.size());
+			List<Double> costLast5Elements = cost.subList(cost.size()-5, cost.size());
 			double[] last5 = ArrayUtils.toPrimitive(costLast5Elements.toArray(new Double[costLast5Elements.size()]));
 
-			cost_variance = Utils.getVariance(last5);
+			//cost_variance = Utils.getVariance(last5);
+			cost_variance = Utils.calculateVariance(last5);
+			System.out.print(" VARIANCE -> " + String.format("%.9f",cost_variance) );
 		}
 
 		//eps_pri= sqrt(N*T)*1 + 1e-3 * max([norm(x), norm(x(:)- repmat(xmean,N,1))]);
@@ -437,7 +438,6 @@ END*/
 //		System.out.println(" Total X -> " + sum4 + " Master X->" + sumMasterOptimal + " EV_X -> " + sum5 +" XDiffSUM -> " + sum6 +  " Xmean -> " + sum + " U -> " + sumU +"  Xmeanold -> " + sum1 + "  S -> " + sum2 + "  R -> " + sum3);
 //		System.out.println("");
 		
-		//if(r_norm <= eps_pri && s_norm <= eps_dual || (cost_variance <= 1e-8))
 		if(r_norm <= eps_pri && s_norm <= eps_dual || (cost_variance <= 1e-9))
 			return true;
 		

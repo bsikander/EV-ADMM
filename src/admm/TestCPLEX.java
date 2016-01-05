@@ -40,11 +40,45 @@ import ilog.cplex.*;
 public class TestCPLEX {
 public static void main(String[] args) throws IloException, IOException {
 	
-	writeSlaveFileWithoutFrameworkOptimized();
+	//writeSlaveFileWithoutFrameworkOptimized();
 	
 	//HamaConfiguration conf = new HamaConfiguration();
 	//PartitionInputData.partitionData(new Path("/Users/raja/Documents/workspace/Hama-EVADMM/EVs_10.txt"), 2, 5, conf, "/Users/raja/Documents/workspace/Hama-EVADMM/partition/");
 	
+	double[] test = new double[] { 
+//			2282433147.002,
+//			2282433147.001,
+//			2282433147.000,
+//			2282433147.001,
+//			2282433147.000,
+//			2282433147.001
+			2282433147.001,
+			2282433147.001,
+			2282433147.000,
+			2282433147.001,
+			2282433147.001,
+			2282433147.001
+								};
+	
+	
+	double variance = Utils.calculateVariance(test);
+	double variance1 = Utils.getVariance(test);
+	double sd = Utils.calculateStandardDeviation(test);
+	//getVariance
+	
+	System.out.println("Library     -> " + String.format("%.9f",variance));
+	System.out.println("My function -> " +String.format("%.9f",variance1));
+	System.out.println("SD -> " + String.format("%.9f",sd));
+	System.out.println("Square ->      " + String.format("%.9f", (0.000752718 * 0.000752718) ));
+	System.out.println(String.format("%.9f", 1e-7));
+	System.out.println(String.format("%.9f", 1e-6));
+	if(variance <= 1e-6)
+		System.out.println("Converged");
+	
+	//System.out.println(Utils.checkCostChagne(test));
+	System.out.println(String.format("%.9f",23268455.579774965 - 23268455.579416536));
+	System.out.println(String.format("%.3f",0.009 + 0.001));
+	System.out.println(0.60 + 0.1);
 	
 	
 	

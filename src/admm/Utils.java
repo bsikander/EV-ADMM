@@ -14,6 +14,7 @@ import org.apache.commons.math3.linear.MatrixUtils;
 import org.apache.commons.math3.linear.RealMatrix;
 import org.apache.commons.math3.linear.RealVector;
 import org.apache.commons.math3.linear.SingularValueDecomposition;
+import org.apache.commons.math3.stat.descriptive.moment.StandardDeviation;
 import org.apache.commons.math3.stat.descriptive.moment.Variance;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FSDataInputStream;
@@ -634,6 +635,15 @@ public class Utils {
 		return v.evaluate(data);
 	}
 	
+	public static double calculateStandardDeviation(double[] data)
+	{
+		//Variance v = new Variance();
+		StandardDeviation d = new StandardDeviation();
+		return d.evaluate(data);
+		
+		//return v.evaluate(data);
+	}
+	
 	public static double[] scaleVector(double[] vec, int N)
 	{
 		double[] scaledVec = new double[vec.length*N];
@@ -694,5 +704,49 @@ public class Utils {
         for(double a :data)
             temp += (mean-a)*(mean-a);
         return temp/data.length;
+    }
+    
+    public static boolean checkCostChagne(double[] data)
+    {
+    	if(data.length == 0) return false;
+    	
+    	for(int i =0; i < data.length - 1; i++) {
+    		//System.out.println(String.format("%.9f",Math.abs(data[i] - data[i+1])));
+    		if(Math.abs(data[i] - data[i+1]) > 1e-3)
+    		{
+    			return false; 
+    		}
+    	}
+    	return true;
+    }
+    
+    public static boolean checkCostChagneFirst2DecimalPlaces(double[] data)
+    {
+    	if(data.length == 0) return false;
+    	
+    	long iPart;
+    	double fPart;
+    	long iPart1;
+    	double fPart1;
+    	
+    	for(int i =0; i < data.length - 1; i++) {
+    		//System.out.println(String.format("%.9f",Math.abs(data[i] - data[i+1])));
+    		
+    		iPart = (long) data[i];
+    		fPart = data[i] - iPart;
+
+    		iPart1 = (long) data[i + 1];
+    		fPart1 = data[i + 1] - iPart1;
+    		
+    		int difference = (int)(fPart * 1000) - (int)(fPart1 * 1000);
+    		//System.out.println("Integeral -> " + iPart + " Fraction -> " + fPart + "COST ->" + difference + "  Data -> " + String.format("%.9f", data[i]) + " Data1 -> " + (int)(data[i] * 100) + " Data2-> " + (int)(data[i+1] * 100));
+    		if( difference == 0 )
+    		{
+    			//do nothing
+    		}
+    		else
+    			return false;
+    	}
+    	return true;
     }
 }
