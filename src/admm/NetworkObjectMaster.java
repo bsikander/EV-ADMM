@@ -16,52 +16,52 @@ import org.codehaus.jackson.map.ObjectMapper;
  */
 public class NetworkObjectMaster implements Writable {
 	private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
-	
+
 	@JsonProperty("u")
 	private double[] u;
-	
+
 	@JsonProperty("xMean")
 	private double[] xMean;
-	
-//	@JsonProperty("EVs")
-//	private List<Integer> EVs;
-	
+
+	// @JsonProperty("EVs")
+	// private List<Integer> EVs;
+
 	@JsonProperty("delta")
 	private double delta;
-	
+
 	/*
 	 * Default constructor of the class.
 	 */
-	public NetworkObjectMaster()
-	{
-		//EVs = new ArrayList<Integer>();
+	public NetworkObjectMaster() {
+		// EVs = new ArrayList<Integer>();
 	}
-	
+
 	/*
 	 * Parameterized constructor
 	 */
 	public NetworkObjectMaster(double[] u, double[] xMean, double delta)
-	//public NetworkObjectMaster(double[] u, double[] xMean, List<Integer> EVs, double delta)
-	{	
+	// public NetworkObjectMaster(double[] u, double[] xMean, List<Integer> EVs,
+	// double delta)
+	{
 		this.u = u;
-		this.xMean = xMean;	
-		//this.EVs = EVs;
+		this.xMean = xMean;
+		// this.EVs = EVs;
 		this.delta = delta;
 	}
-	
-	public void setNetworkObjectMaster(NetworkObjectMaster n)
-	{
+
+	public void setNetworkObjectMaster(NetworkObjectMaster n) {
 		this.u = n.u;
 		this.xMean = n.xMean;
-		//this.EVs = n.EVs;
+		// this.EVs = n.EVs;
 		this.delta = n.delta;
 	}
-	
+
 	@Override
 	public void readFields(DataInput in) throws IOException {
 		Text contextJson = new Text();
 		contextJson.readFields(in);
-		setNetworkObjectMaster(OBJECT_MAPPER.readValue(contextJson.toString(), NetworkObjectMaster.class));
+		setNetworkObjectMaster(OBJECT_MAPPER.readValue(contextJson.toString(),
+				NetworkObjectMaster.class));
 	}
 
 	@Override
@@ -69,49 +69,43 @@ public class NetworkObjectMaster implements Writable {
 		Text contextJson = new Text(OBJECT_MAPPER.writeValueAsString(this));
 		contextJson.write(out);
 	}
-	
+
 	@JsonProperty("u")
-	public double[] getU()
-	{
+	public double[] getU() {
 		return this.u;
 	}
-	
+
 	@JsonProperty("xMean")
-	public double[] getxMean()
-	{
+	public double[] getxMean() {
 		return this.xMean;
 	}
-	
-//	@JsonProperty("EVs")
-//	public List<Integer> getEV()
-//	{
-//		return this.EVs;
-//	}
-	
+
+	// @JsonProperty("EVs")
+	// public List<Integer> getEV()
+	// {
+	// return this.EVs;
+	// }
+
 	@JsonProperty("delta")
-	public double getDelta()
-	{
+	public double getDelta() {
 		return this.delta;
 	}
-		
-	public void setU(double[] value)
-	{
+
+	public void setU(double[] value) {
 		this.u = value;
 	}
-	
-	public void setxMean(double[] value) 
-	{
+
+	public void setxMean(double[] value) {
 		this.xMean = value;
 	}
-	
-//	public void addEV(int evId)
-//	{
-//		EVs.add(evId);
-//	}
-	
-	public void setDelta(double delta)
-	{
+
+	// public void addEV(int evId)
+	// {
+	// EVs.add(evId);
+	// }
+
+	public void setDelta(double delta) {
 		this.delta = delta;
 	}
-	
+
 }
