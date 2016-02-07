@@ -451,6 +451,10 @@ public class Utils {
 		
 		for(int i =0; i< xMasterOptimal.length; i++)
 			average[i] = round(average[i]/(double)evCount);
+		
+//		System.out.println("X-AVERAGE - Start");
+//		Utils.PrintArray(average);
+//		System.out.println("X-AVERAGE - End");
 		return average;
 	}
 	

@@ -3,6 +3,8 @@ package admm;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
+import java.util.List;
+import java.util.Map;
 
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.io.Writable;
@@ -15,11 +17,19 @@ import org.codehaus.jackson.map.ObjectMapper;
 public class NetworkObjectSlave implements Writable{
 	private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 	
-	@JsonProperty("x_i")
-	double[] x_i;
+//	@JsonProperty("x_i")
+//	double[] x_i;
+//	
+//	@JsonProperty("EVId")
+//	private int EVId;
 	
-	@JsonProperty("EVId")
-	private int EVId;
+	@JsonProperty("xSubAverage")
+	double[] xSubAverage;
+	
+//	@JsonProperty("sumAgainstEVNo")
+//	Map<Integer,Integer> sumAgainstEVNo;
+	
+	
 	
 //	@JsonProperty("x_i_difference")
 //	private double[] x_i_difference;
@@ -31,18 +41,19 @@ public class NetworkObjectSlave implements Writable{
 	 * Parameterized constructor
 	 */
 	//public NetworkObjectSlave(double[] x_i, int EVId, double[] x_i_difference, double cost)
-	public NetworkObjectSlave(double[] x_i, int EVId)
+	//public NetworkObjectSlave(double[] x_i, int EVId)
+	public NetworkObjectSlave(double[] xSubAverage)//, Map<Integer,Integer> sumAgainstEVNo)
 	{
-		this.x_i = x_i;
-		this.EVId = EVId;
+		this.xSubAverage = xSubAverage;
+		
 //		this.x_i_difference = x_i_difference;
 //		this.cost = cost;
 	}
 
 	public void setNetworkObjectSlave(NetworkObjectSlave n)
 	{
-		this.x_i = n.x_i;
-		this.EVId = n.EVId;
+		this.xSubAverage = n.xSubAverage;
+		//this.sumAgainstEVNo = n.sumAgainstEVNo;
 //		this.x_i_difference = n.x_i_difference;
 //		this.cost = n.cost;
 	}
@@ -63,17 +74,29 @@ public class NetworkObjectSlave implements Writable{
 		contextJson.write(out);
 	}
 	
-	@JsonProperty("x_i")
-	public double[] getXi()
+	@JsonProperty("xSubAverage")
+	public double[] getSubAverage()
 	{
-		return this.x_i;
+		return this.xSubAverage;
 	}
 	
-	@JsonProperty("EVId")
-	public int getEVId()
-	{
-		return this.EVId;
-	}
+//	@JsonProperty("sumAgainstEVNo")
+//	public Map<Integer,Integer> getSumAgainstEVNo()
+//	{
+//		return this.sumAgainstEVNo;
+//	}
+	
+//	@JsonProperty("x_i")
+//	public double[] getXi()
+//	{
+//		return this.x_i;
+//	}
+//	
+//	@JsonProperty("EVId")
+//	public int getEVId()
+//	{
+//		return this.EVId;
+//	}
 	
 //	@JsonProperty("cost")
 //	public double getCost()

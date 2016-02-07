@@ -127,10 +127,12 @@ public class EVADMMBsp extends BSP<LongWritable, Text, IntWritable, Text, Text>{
 					
 					//long lStartTime = System.nanoTime();
 					
-					Pair<double[], double[][], Double, double[][]> result = receiveSlaveOptimalValuesAndUpdateX(peer, masterContext.getN());
-					slaveAverageOptimalValue = result.averageXReceived();
-
-					xsum = Utils.calculateEVSum(result.xsum());
+					//Pair<double[], double[][], Double, double[][]> result = receiveSlaveOptimalValuesAndUpdateX(peer, masterContext.getN());
+					double[] result = receiveSlaveOptimalValuesAndUpdateX(peer, masterContext.getN());
+					slaveAverageOptimalValue = result;  
+					xsum = slaveAverageOptimalValue;
+					
+					//xsum = Utils.calculateEVSum(result.xsum());
 //					System.out.println("------- XSUM ----");
 //					Utils.PrintArray(xsum);
 //					System.out.println("------- XSUM END----");
@@ -147,7 +149,11 @@ public class EVADMMBsp extends BSP<LongWritable, Text, IntWritable, Text, Text>{
 				    
 					cost.add(costtemp*costtemp);
 					
-					//System.out.print(String.format("%03d", (k+1)) + " > COST -> " + String.format("%.9f",cost.get(cost.size() -1)) );
+					//System.out.println(String.format("%03d", (k+1))  + " > COST -> " + String.format("%.9f",cost.get(cost.size() -1)) );
+//					System.out.println("XSUMMM - Start");
+//					Utils.PrintArray(xsum);
+//					System.out.println("XSUMMM - End");
+					
 					System.out.println(String.format("%.9f",cost.get(cost.size() -1)));
 
 					masterContext.setXMean(Utils.calculateMean(masterContext.getXOptimal(), slaveAverageOptimalValue, masterContext.getN())); 	//Take Mean
@@ -234,6 +240,7 @@ public class EVADMMBsp extends BSP<LongWritable, Text, IntWritable, Text, Text>{
 				}
 				else
 				{
+					double[] averageSubX = new double[masterData.getxMean().length];
 					while(peer.readNext(key, value) != false) {
 						//Load the current input
 						
@@ -250,21 +257,17 @@ public class EVADMMBsp extends BSP<LongWritable, Text, IntWritable, Text, Text>{
 							//Do optimization and write the x_optimal to mat file
 							
 							double cost = slaveContext.optimize(cplex);
-							
 							optimalEVValues.put(slaveData.getEVNo(), slaveContext.getXOptimalSlave());
 							
-							//Utils.PrintArray(slaveContext.getXOptimalSlave());
+							averageSubX = Utils.vectorAdd(averageSubX, slaveContext.getXOptimalSlave());
 							
-							//System.out.println(">> Slave sending EV No -> " + slaveData.getEVNo());
-							
-							//NetworkObjectSlave slave = new NetworkObjectSlave(slaveContext.getXOptimalSlave(), slaveData.getEVNo(), slaveContext.getXOptimalDifference(), cost);
-							NetworkObjectSlave slave = new NetworkObjectSlave(slaveContext.getXOptimalSlave(), slaveData.getEVNo());
-							sendXOptimalToMaster(peer, slave);
 						} catch (IloException e) {
 							e.printStackTrace();
 							peer.write(new IntWritable(1), new Text(e.getMessage()));
 						}
 					}
+					NetworkObjectSlave slave = new NetworkObjectSlave(averageSubX);//, slaveData.getEVNo());
+					sendXOptimalToMaster(peer, slave);
 				}
 				//System.out.println(peer.getPeerName() +" > Slave Optimization Time (MS) -> " + (System.currentTimeMillis() - startBarrierTimeSlaveOptimization));
 				peer.incrementCounter(EVADMMCounters.AGGREGATED_TIME_MS_SLAVE_OPTIMIZATION,(System.currentTimeMillis() - startBarrierTimeSlaveOptimization));
@@ -496,49 +499,72 @@ END*/
 		peer.send(this.masterTask, new Text(Utils.networkSlaveToJson(object)));
 	}
 	
+	
 	/*
 	 * This function is used to collect all the NetworkObjectSlave objects at the master node. It stores the all the
 	 * values in a double array and this array is used to check the convergence. It also averages all the received 
 	 * optimal value, adds up all the costs and stores all the difference of x_old* and x*.
 	 */
-	private Pair<double[],double[][], Double, double[][]> receiveSlaveOptimalValuesAndUpdateX(BSPPeer<LongWritable, Text, IntWritable, Text, Text> peer, int totalN) throws IOException
+	private double[] receiveSlaveOptimalValuesAndUpdateX(BSPPeer<LongWritable, Text, IntWritable, Text, Text> peer, int totalN) throws IOException
 	{
 		NetworkObjectSlave slave;
 		Text receivedJson;
 		
-		double[][] s = new double[this.masterContext.getXOptimal().length][totalN];
-		//double[] averageXReceived = Utils.getZeroArray(this.masterContext.getXOptimal().length);
 		double[] averageXReceived = new double[this.masterContext.getXOptimal().length];
-		double[][] allOptimalSlaveXReceived = new double[this.masterContext.getXOptimal().length][totalN];
-		
-		double cost = 0;
 		
 		while ((receivedJson = peer.getCurrentMessage()) != null) //Receive initial array 
 		{
 			slave = Utils.jsonToNetworkSlave(receivedJson.toString());
-			averageXReceived =  Utils.vectorAdd(averageXReceived, slave.getXi());
-			//cost = cost + slave.getCost();
-			
-			//System.out.println(">> Master received EV No -> " + slave.getEVId());
-			
-			//int i = 0;
-//			for(double d: slave.getXiDifference()) {
-//				s[i][slave.getEVId()] = d;
-//				i++;
-//			}
-			
-			int j = 0;
-			for(double d: slave.getXi()) { //Store all the optimizal slave values recieved inside this array
-				allOptimalSlaveXReceived[j][slave.getEVId()] = d;
-				j++;
-			}
-			
-			//ev++;
-		}
-	
-		//return new Pair<double[],double[][], Double>(averageXReceived,s, cost);
-		return new Pair<double[],double[][], Double,double[][]>(averageXReceived,s, cost,allOptimalSlaveXReceived); //For time being, I have removed the s from return. If required then use it.
+			averageXReceived =  Utils.vectorAdd(averageXReceived, slave.getSubAverage()); // Get all the individual average values and average them
+		}	
+		
+		return averageXReceived;
 	}
+	
+	
+//	/*
+//	 * This function is used to collect all the NetworkObjectSlave objects at the master node. It stores the all the
+//	 * values in a double array and this array is used to check the convergence. It also averages all the received 
+//	 * optimal value, adds up all the costs and stores all the difference of x_old* and x*.
+//	 */
+//	private Pair<double[],double[][], Double, double[][]> receiveSlaveOptimalValuesAndUpdateX(BSPPeer<LongWritable, Text, IntWritable, Text, Text> peer, int totalN) throws IOException
+//	{
+//		NetworkObjectSlave slave;
+//		Text receivedJson;
+//		
+//		double[][] s = new double[this.masterContext.getXOptimal().length][totalN];
+//		//double[] averageXReceived = Utils.getZeroArray(this.masterContext.getXOptimal().length);
+//		double[] averageXReceived = new double[this.masterContext.getXOptimal().length];
+//		double[][] allOptimalSlaveXReceived = new double[this.masterContext.getXOptimal().length][totalN];
+//		
+//		double cost = 0;
+//		
+//		while ((receivedJson = peer.getCurrentMessage()) != null) //Receive initial array 
+//		{
+//			slave = Utils.jsonToNetworkSlave(receivedJson.toString());
+//			averageXReceived =  Utils.vectorAdd(averageXReceived, slave.getXi());
+//			//cost = cost + slave.getCost();
+//			
+//			//System.out.println(">> Master received EV No -> " + slave.getEVId());
+//			
+//			//int i = 0;
+////			for(double d: slave.getXiDifference()) {
+////				s[i][slave.getEVId()] = d;
+////				i++;
+////			}
+//			
+//			int j = 0;
+//			for(double d: slave.getXi()) { //Store all the optimizal slave values recieved inside this array
+//				allOptimalSlaveXReceived[j][slave.getEVId()] = d;
+//				j++;
+//			}
+//			
+//			//ev++;
+//		}
+//	
+//		//return new Pair<double[],double[][], Double>(averageXReceived,s, cost);
+//		return new Pair<double[],double[][], Double,double[][]>(averageXReceived,s, cost,allOptimalSlaveXReceived); //For time being, I have removed the s from return. If required then use it.
+//	}
 	
 	private NetworkObjectMaster receiveMasterUAndXMean(BSPPeer<NullWritable, NullWritable, IntWritable, Text, Text> peer) throws IOException
 	{	
@@ -579,30 +605,35 @@ END*/
 	/*
 	 * This class is used to store values received from all the peers. 
 	 */
-	class Pair<T,U,C,X> {
-	    private final T m_first;
-	    private final U m_second;
-	    private final C m_cost;
+	//class Pair<T,U,C,X> {
+	class Pair<T,X> {
+	    private final T m_xaverage;
+//	    private final U m_second;
+//	    private final C m_cost;
 	    private final X m_xsum;
 
-	    public Pair(T first, U second, C cost, X m_xsum) {
-	        m_first = first;
-	        m_second = second;
-	        m_cost = cost;
+//	    public Pair(T first, U second, C cost, X m_xsum) {
+//	        m_first = first;
+//	        m_second = second;
+//	        m_cost = cost;
+//	        this.m_xsum = m_xsum;
+//	    }
+	    public Pair(T first, X m_xsum) {
+	    	m_xaverage = first;
 	        this.m_xsum = m_xsum;
 	    }
 
 	    public T averageXReceived() {
-	        return m_first;
+	        return m_xaverage;
 	    }
 
-	    public U xDifferenceMatrix() {
-	        return m_second;
-	    }
-	    
-	    public C cost() {
-	    	return m_cost;
-	    }
+//	    public U xDifferenceMatrix() {
+//	        return m_second;
+//	    }
+//	    
+//	    public C cost() {
+//	    	return m_cost;
+//	    }
 	    
 	    public X xsum()
 	    {
