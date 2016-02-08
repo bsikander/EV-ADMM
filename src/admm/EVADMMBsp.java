@@ -128,7 +128,10 @@ public class EVADMMBsp extends BSP<LongWritable, Text, IntWritable, Text, Text>{
 					//long lStartTime = System.nanoTime();
 					
 					//Pair<double[], double[][], Double, double[][]> result = receiveSlaveOptimalValuesAndUpdateX(peer, masterContext.getN());
+					long messageReceiveTime = System.currentTimeMillis();
 					double[] result = receiveSlaveOptimalValuesAndUpdateX(peer, masterContext.getN());
+					peer.incrementCounter(EVADMMCounters.AGGREGATED_TIME_MS_MASTER_MESSAGE_READ,(System.currentTimeMillis() - messageReceiveTime));
+					
 					slaveAverageOptimalValue = result;  
 					xsum = slaveAverageOptimalValue;
 					
@@ -139,22 +142,27 @@ public class EVADMMBsp extends BSP<LongWritable, Text, IntWritable, Text, Text>{
 					
 //					double[] masterXOptimalOld = masterContext.getXOptimal();
 //					double[] oldXMean = masterContext.getxMean(); 
+					long masterOptimizeTime = System.currentTimeMillis();
 					masterContext.optimize(masterContext.getXOptimal(),k);
+					peer.incrementCounter(EVADMMCounters.AGGREGATED_TIME_MS_MASTER_OPTIMIZATION,(System.currentTimeMillis() - masterOptimizeTime));
 					
+					
+					
+					long masterOtherTime = System.currentTimeMillis();
 					double costtemp = Utils.calculateNorm( Utils.vectorAdd(masterContext.getMasterData().getD(), xsum) );
-				    
+					
 				    //costtemp = Math.round ((costtemp * costtemp) * 1000000000.0) / 1000000000.0; //round off to 3 decimal places.
 					//cost.add(costtemp);
 				    //costtemp = ((costtemp * costtemp) * 1000000000.0) / 1000000000.0; //round off to 3 decimal places.
 				    
 					cost.add(costtemp*costtemp);
 					
-					//System.out.println(String.format("%03d", (k+1))  + " > COST -> " + String.format("%.9f",cost.get(cost.size() -1)) );
+					System.out.println(String.format("%03d", (k+1))  + " > COST -> " + String.format("%.9f",cost.get(cost.size() -1)) );
 //					System.out.println("XSUMMM - Start");
 //					Utils.PrintArray(xsum);
 //					System.out.println("XSUMMM - End");
 					
-					System.out.println(String.format("%.9f",cost.get(cost.size() -1)));
+					//System.out.println(String.format("%.9f",cost.get(cost.size() -1)));
 
 					masterContext.setXMean(Utils.calculateMean(masterContext.getXOptimal(), slaveAverageOptimalValue, masterContext.getN())); 	//Take Mean
 					masterContext.setU(Utils.vectorAdd(masterContext.getu(), masterContext.getxMean())); //Update u
@@ -178,7 +186,7 @@ public class EVADMMBsp extends BSP<LongWritable, Text, IntWritable, Text, Text>{
 					
 					//boolean converged = checkConvergence(xMatrix,xDifferenceMatrix, masterContext.getxMean(), oldXMean, masterContext.getN(), masterContext.getu(), cost, k);
 					boolean converged = checkConvergence(cost, k);
-					
+					peer.incrementCounter(EVADMMCounters.AGGREGATED_TIME_MS_MASTER_OTHER,(System.currentTimeMillis() - masterOtherTime));
 //					long lEndTime = System.nanoTime();
 //					long difference = lEndTime - lStartTime;
 //					long milliseconds = difference/1000000;
@@ -241,6 +249,7 @@ public class EVADMMBsp extends BSP<LongWritable, Text, IntWritable, Text, Text>{
 				else
 				{
 					double[] averageSubX = new double[masterData.getxMean().length];
+					long slaveJustOptimization = System.currentTimeMillis();
 					while(peer.readNext(key, value) != false) {
 						//Load the current input
 						
@@ -266,14 +275,23 @@ public class EVADMMBsp extends BSP<LongWritable, Text, IntWritable, Text, Text>{
 							peer.write(new IntWritable(1), new Text(e.getMessage()));
 						}
 					}
+					peer.incrementCounter(EVADMMCounters.AGGREGATED_TIME_MS_SLAVE_JUST_OPTIMIZATION,(System.currentTimeMillis() - slaveJustOptimization));
+					
 					NetworkObjectSlave slave = new NetworkObjectSlave(averageSubX);//, slaveData.getEVNo());
+					
+					long slaveMessageSendTime = System.currentTimeMillis();
 					sendXOptimalToMaster(peer, slave);
+					peer.incrementCounter(EVADMMCounters.AGGREGATED_TIME_MS_SLAVE_MESSAGE_SEND_TIME,(System.currentTimeMillis() - slaveMessageSendTime));
+					
 				}
 				//System.out.println(peer.getPeerName() +" > Slave Optimization Time (MS) -> " + (System.currentTimeMillis() - startBarrierTimeSlaveOptimization));
 				peer.incrementCounter(EVADMMCounters.AGGREGATED_TIME_MS_SLAVE_OPTIMIZATION,(System.currentTimeMillis() - startBarrierTimeSlaveOptimization));
 				isFirstIteration = false;
 				
+				long slaveSyncTime = System.currentTimeMillis();
 				peer.sync(); //Send all the data
+				peer.incrementCounter(EVADMMCounters.AGGREGATED_TIME_MS_SLAVE_SYNC,(System.currentTimeMillis() - slaveSyncTime));
+				
 				peer.reopenInput(); //Start the input again
 				
 				if(finish == true) {
@@ -599,7 +617,14 @@ END*/
 	enum EVADMMCounters {
 		AGGREGATED_TIME_MS_MASTER_WAIT_FOR_SLAVES,
 		AGGREGATED_TIME_MS_SLAVE_WAIT_FOR_MASTER,
-		AGGREGATED_TIME_MS_SLAVE_OPTIMIZATION
+		AGGREGATED_TIME_MS_SLAVE_OPTIMIZATION,
+		AGGREGATED_TIME_MS_SLAVE_MESSAGE_SEND_TIME,
+		AGGREGATED_TIME_MS_SLAVE_SYNC,
+		AGGREGATED_TIME_MS_MASTER_MESSAGE_READ,
+		AGGREGATED_TIME_MS_MASTER_OPTIMIZATION,
+		AGGREGATED_TIME_MS_MASTER_OTHER,
+		AGGREGATED_TIME_MS_SLAVE_JUST_OPTIMIZATION
+		
 	}
 	
 	/*

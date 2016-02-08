@@ -40,8 +40,8 @@ public class Main {
 		job.setJarByClass(EVADMMBsp.class);
 		job.setJobName("EVADMM");
 	
-		job.set(Constants.EVADMM_MAX_ITERATIONS, "100");
-		job.set(Constants.EVADMM_EV_COUNT, "100");
+		job.set(Constants.EVADMM_MAX_ITERATIONS, "200");
+		job.set(Constants.EVADMM_EV_COUNT, "10");
 		job.set(Constants.EVADMM_OUTPUT_PATH, "/Users/raja/Documents/workspace/Hama-EVADMM/output/");
 		job.set(Constants.EVADMM_AGGREGATOR_PATH, "/Users/raja/Documents/Thesis/ADMM_matlab/Aggregator/aggregator.mat");
 		job.set(Constants.EVADMM_EV_PATH, "/Users/raja/Documents/Thesis/ADMM_matlab/Valley_Filling_1.1/Jose/EVs/home/");
