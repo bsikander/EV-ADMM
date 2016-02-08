@@ -127,7 +127,10 @@ public class EVADMMBsp extends BSP<LongWritable, Text, IntWritable, Text, Text>{
 					
 					//long lStartTime = System.nanoTime();
 					
+					long messageReceiveTime = System.currentTimeMillis();
 					Pair<double[], double[][], Double, double[][]> result = receiveSlaveOptimalValuesAndUpdateX(peer, masterContext.getN());
+					peer.incrementCounter(EVADMMCounters.AGGREGATED_TIME_MS_MASTER_MESSAGE_READ,(System.currentTimeMillis() - messageReceiveTime));
+					
 					slaveAverageOptimalValue = result.averageXReceived();
 
 					xsum = Utils.calculateEVSum(result.xsum());
@@ -137,8 +140,11 @@ public class EVADMMBsp extends BSP<LongWritable, Text, IntWritable, Text, Text>{
 					
 //					double[] masterXOptimalOld = masterContext.getXOptimal();
 //					double[] oldXMean = masterContext.getxMean(); 
+					long masterOptimizeTime = System.currentTimeMillis();
 					masterContext.optimize(masterContext.getXOptimal(),k);
+					peer.incrementCounter(EVADMMCounters.AGGREGATED_TIME_MS_MASTER_OPTIMIZATION,(System.currentTimeMillis() - masterOptimizeTime));
 					
+					long masterOtherTime = System.currentTimeMillis();
 					double costtemp = Utils.calculateNorm( Utils.vectorAdd(masterContext.getMasterData().getD(), xsum) );
 				    
 				    //costtemp = Math.round ((costtemp * costtemp) * 1000000000.0) / 1000000000.0; //round off to 3 decimal places.
@@ -172,7 +178,7 @@ public class EVADMMBsp extends BSP<LongWritable, Text, IntWritable, Text, Text>{
 					
 					//boolean converged = checkConvergence(xMatrix,xDifferenceMatrix, masterContext.getxMean(), oldXMean, masterContext.getN(), masterContext.getu(), cost, k);
 					boolean converged = checkConvergence(cost, k);
-					
+					peer.incrementCounter(EVADMMCounters.AGGREGATED_TIME_MS_MASTER_OTHER,(System.currentTimeMillis() - masterOtherTime));
 //					long lEndTime = System.nanoTime();
 //					long difference = lEndTime - lStartTime;
 //					long milliseconds = difference/1000000;
@@ -234,8 +240,11 @@ public class EVADMMBsp extends BSP<LongWritable, Text, IntWritable, Text, Text>{
 				}
 				else
 				{
+					
+					
 					while(peer.readNext(key, value) != false) {
 						//Load the current input
+						long slaveJustOptimization = System.currentTimeMillis();
 						
 						SlaveData slaveData = new SlaveData(value.toString());
 						
@@ -253,13 +262,16 @@ public class EVADMMBsp extends BSP<LongWritable, Text, IntWritable, Text, Text>{
 							
 							optimalEVValues.put(slaveData.getEVNo(), slaveContext.getXOptimalSlave());
 							
+							peer.incrementCounter(EVADMMCounters.AGGREGATED_TIME_MS_SLAVE_JUST_OPTIMIZATION,(System.currentTimeMillis() - slaveJustOptimization));
 							//Utils.PrintArray(slaveContext.getXOptimalSlave());
 							
 							//System.out.println(">> Slave sending EV No -> " + slaveData.getEVNo());
 							
 							//NetworkObjectSlave slave = new NetworkObjectSlave(slaveContext.getXOptimalSlave(), slaveData.getEVNo(), slaveContext.getXOptimalDifference(), cost);
+							long slaveMessageSendTime = System.currentTimeMillis();
 							NetworkObjectSlave slave = new NetworkObjectSlave(slaveContext.getXOptimalSlave(), slaveData.getEVNo());
 							sendXOptimalToMaster(peer, slave);
+							peer.incrementCounter(EVADMMCounters.AGGREGATED_TIME_MS_SLAVE_MESSAGE_SEND_TIME,(System.currentTimeMillis() - slaveMessageSendTime));
 						} catch (IloException e) {
 							e.printStackTrace();
 							peer.write(new IntWritable(1), new Text(e.getMessage()));
@@ -270,7 +282,9 @@ public class EVADMMBsp extends BSP<LongWritable, Text, IntWritable, Text, Text>{
 				peer.incrementCounter(EVADMMCounters.AGGREGATED_TIME_MS_SLAVE_OPTIMIZATION,(System.currentTimeMillis() - startBarrierTimeSlaveOptimization));
 				isFirstIteration = false;
 				
+				long slaveSyncTime = System.currentTimeMillis();
 				peer.sync(); //Send all the data
+				peer.incrementCounter(EVADMMCounters.AGGREGATED_TIME_MS_SLAVE_SYNC,(System.currentTimeMillis() - slaveSyncTime));
 				peer.reopenInput(); //Start the input again
 				
 				if(finish == true) {
@@ -573,7 +587,13 @@ END*/
 	enum EVADMMCounters {
 		AGGREGATED_TIME_MS_MASTER_WAIT_FOR_SLAVES,
 		AGGREGATED_TIME_MS_SLAVE_WAIT_FOR_MASTER,
-		AGGREGATED_TIME_MS_SLAVE_OPTIMIZATION
+		AGGREGATED_TIME_MS_SLAVE_OPTIMIZATION,
+		AGGREGATED_TIME_MS_SLAVE_MESSAGE_SEND_TIME,
+		AGGREGATED_TIME_MS_SLAVE_SYNC,
+		AGGREGATED_TIME_MS_MASTER_MESSAGE_READ,
+		AGGREGATED_TIME_MS_MASTER_OPTIMIZATION,
+		AGGREGATED_TIME_MS_MASTER_OTHER,
+		AGGREGATED_TIME_MS_SLAVE_JUST_OPTIMIZATION
 	}
 	
 	/*

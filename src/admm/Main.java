@@ -72,12 +72,12 @@ public class Main {
 											job.getInt(Constants.EVADMM_BSP_TASK,0) - 1, // Total BSP tasks that user wants - 1 (for master) 
 											job.getInt(Constants.EVADMM_EV_COUNT,0),     // Total EVs that are being processed currently 
 											conf, 										 // Current configuration of Hama
-											"/Users/raja/Documents/workspace/Hama-EVADMM/partition/" //For local
-											//"/Partition/" //For cluster
+											//"/Users/raja/Documents/workspace/Hama-EVADMM/partition/" //For local
+											"/Partition/" //For cluster
 										);
 		
-		String inputPath = "/Users/raja/Documents/workspace/Hama-EVADMM/empty.txt,"; //For local
-		//String inputPath = "/EVtxt/empty.txt,"; //For cluster
+		//String inputPath = "/Users/raja/Documents/workspace/Hama-EVADMM/empty.txt,"; //For local
+		String inputPath = "/EVtxt/empty.txt,"; //For cluster
 		
 		for(String s : partitionedFiles) {
 			inputPath += s + ",";
