@@ -6,7 +6,7 @@ Over the past decade, the total amount of data collected has increased significa
 
 Further due to the lack of generic distributed convex optimization framework, this study also investigates and presents a framework of reusable classes that can be used to solve similar problems and extended to solve a completely different convex problem based on ADMM algorithm. EVADMM algorithm has been implemented on this framework to test its working. Since, this framework is built on Apache Hama using ADMM, data and compute intensive iterative distributed optimization problems can be solved with it.
 
-#Keywords: 
+Keywords: 
 Distributed Convex Optimization, EVADMM, ADMM, Apache Hama, HDFS, Framework, CPLEX, OPL, ADF, Docker, LRZ, Big Data
 
 Presentation:
